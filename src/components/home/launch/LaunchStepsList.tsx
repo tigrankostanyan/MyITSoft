@@ -36,7 +36,7 @@ export const LaunchStepsList = memo(function LaunchStepsList({
                 stepRefs.current[idx] = el
               }}
               className="group flex items-start gap-3 transition-opacity duration-300 sm:gap-4 lg:gap-5"
-              style={{ opacity: idx === 0 ? 1 : 0.42 }}
+              style={{ opacity: idx === 0 ? 1 : 0.72 }}
             >
               <div
                 ref={(el) => {

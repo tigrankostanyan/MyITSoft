@@ -11,6 +11,7 @@ export function AutomationHubModel({
   color = '#38bdf8',
   exploded = 0,
   hologram = false,
+  isMobile = false,
 }: ModelProps) {
   const wire = hologram
   const outerGimbalRef = useRef<THREE.Group>(null)
@@ -64,14 +65,14 @@ export function AutomationHubModel({
 
   return (
     <group scale={0.9}>
-      <OuterGimbal groupRef={outerGimbalRef} exploded={exploded} color={color} wire={wire} />
-      <MidGimbal groupRef={midGimbalRef} exploded={exploded} wire={wire} />
-      <HubCpu groupRef={coreRef} exploded={exploded} wire={wire} />
+      <OuterGimbal groupRef={outerGimbalRef} exploded={exploded} color={color} wire={wire} isMobile={isMobile} />
+      <MidGimbal groupRef={midGimbalRef} exploded={exploded} wire={wire} isMobile={isMobile} />
+      <HubCpu groupRef={coreRef} exploded={exploded} wire={wire} isMobile={isMobile} />
       <group ref={orbitGroupRef} rotation={[0.16, 0, -0.1]}>
-        <ShieldEmblem groupRef={shieldRef} r={orbitR} wire={wire} />
-        <N8nEmblem groupRef={n8nRef} r={orbitR} wire={wire} />
-        <SpeedEmblem groupRef={speedRef} r={orbitR} wire={wire} />
-        <PremiumEmblem groupRef={premiumRef} r={orbitR} wire={wire} />
+        <ShieldEmblem groupRef={shieldRef} r={orbitR} wire={wire} isMobile={isMobile} />
+        <N8nEmblem groupRef={n8nRef} r={orbitR} wire={wire} isMobile={isMobile} />
+        <SpeedEmblem groupRef={speedRef} r={orbitR} wire={wire} isMobile={isMobile} />
+        <PremiumEmblem groupRef={premiumRef} r={orbitR} wire={wire} isMobile={isMobile} />
       </group>
     </group>
   )

@@ -1,23 +1,9 @@
-import { memo, useEffect, useRef } from 'react'
-import { TRANSLATIONS } from '~/i18n/translations'
-import {
-  clamp01,
-  computeRunwayProgress,
-  getCachedScrollY,
-  getStableViewportHeight,
-  getStableViewportWidth,
-  measureElementBounds,
-  smoothstep,
-  subscribeLayoutChange,
-} from '~/lib/scroll-math'
-import { useUIStore } from '~/store/ui-store'
-import { LAUNCH_STEPS } from './launch/launchData'
+import { memo, useRef } from 'react'
 import { LaunchStepsList } from './launch/LaunchStepsList'
 import { ReadyToMoveCta } from './launch/ReadyToMoveCta'
 import { RocketCanvas } from './launch/RocketCanvas'
 import { RocketModel } from './launch/RocketModel'
-
-const STEP_THRESHOLDS = [0.0, 0.16, 0.32] as const
+import { useLaunchChoreography } from './launch/useLaunchChoreography'
 
 export const LaunchSequenceSection = memo(function LaunchSequenceSection() {
   const runwayRef = useRef<HTMLDivElement>(null)
@@ -32,158 +18,18 @@ export const LaunchSequenceSection = memo(function LaunchSequenceSection() {
   const rocketOffsetRef = useRef({ x: 0, y: 0 })
   const wakeVfxRef = useRef<(() => void) | null>(null)
 
-  useEffect(() => {
-    let rafId = 0
-    let lastTime = performance.now()
-    let initialized = false
-    let targetP = 0
-    let smoothP = 0
-    let lastStatusText = ''
-    let prevFrameP = 0
-    let inRange = false
-    let bounds = measureElementBounds(runwayRef.current)
-
-    const applyFrame = (p: number, nowSec: number) => {
-      progressRef.current = p
-
-      const ignition = smoothstep(0.1, 0.36, p)
-
-      const liftU = clamp01((p - 0.36) / 0.52)
-      const liftEase = Math.pow(liftU, 2.55)
-      const vh = getStableViewportHeight()
-      const liftPx = -liftEase * (vh * 1.25)
-
-      const isMobile = getStableViewportWidth() < 1024
-      const shakeAmp = isMobile ? 0 : ignition * (1 - smoothstep(0.55, 0.82, p)) * 3.2
-      const shakeX = isMobile
-        ? 0
-        : Math.sin(nowSec * 64) * shakeAmp + Math.cos(nowSec * 97) * shakeAmp * 0.45
-      const shakeY = isMobile ? 0 : Math.cos(nowSec * 78) * shakeAmp * 0.6
-      const tiltDeg = isMobile ? 0 : Math.sin(nowSec * 38) * shakeAmp * 0.28
-
-      rocketOffsetRef.current.x = shakeX
-      rocketOffsetRef.current.y = liftPx + shakeY
-      if (p > 0.04 || (prevFrameP >= 0.04 && p <= 0.04)) {
-        wakeVfxRef.current?.()
-      }
-      prevFrameP = p
-
-      if (rocketWrapRef.current) {
-        rocketWrapRef.current.style.transform = `translate3d(${shakeX.toFixed(2)}px, ${(liftPx + shakeY).toFixed(2)}px, 0) rotate(${tiltDeg.toFixed(2)}deg)`
-      }
-
-      if (underGlowRef.current) {
-        const glowOp = 0.08 + ignition * 0.88
-        underGlowRef.current.style.opacity = glowOp.toFixed(3)
-      }
-
-      if (windowGlowRef.current) {
-        const pulse = 0.78 + Math.sin(nowSec * 3.2) * 0.14 + ignition * 0.22
-        windowGlowRef.current.style.opacity = clamp01(pulse).toFixed(3)
-      }
-
-      for (let i = 0; i < LAUNCH_STEPS.length; i++) {
-        const row = stepRefs.current[i]
-        const badge = badgeRefs.current[i]
-        const active = smoothstep(STEP_THRESHOLDS[i], STEP_THRESHOLDS[i] + 0.12, p)
-        const opacity = i === 0 ? 1 : 0.4 + active * 0.6
-        if (row) {
-          row.style.opacity = opacity.toFixed(3)
-        }
-        if (badge) {
-          const scale = i === 0 ? 1 : 0.94 + active * 0.06
-          badge.style.transform = `scale(${scale.toFixed(3)})`
-        }
-      }
-
-      if (statusRef.current) {
-        const nextText = TRANSLATIONS[useUIStore.getState().locale].launch.scrollHint
-        if (nextText !== lastStatusText) {
-          lastStatusText = nextText
-          statusRef.current.textContent = nextText
-        }
-      }
-    }
-
-    const tick = (now: number) => {
-      if (initialized && !inRange) {
-        rafId = 0
-        return
-      }
-      const dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000))
-      lastTime = now
-      targetP = computeRunwayProgress(bounds, getCachedScrollY(), getStableViewportHeight())
-      const isMobile = getStableViewportWidth() < 1024
-
-      if (!initialized) {
-        smoothP = targetP
-        initialized = true
-      } else {
-        const factor = 1 - Math.exp(-16.0 * dt)
-        smoothP += (targetP - smoothP) * factor
-      }
-
-      applyFrame(smoothP, now * 0.001)
-
-      const needsRumble = !isMobile && smoothP > 0.1 && smoothP < 0.85
-      if (inRange && (Math.abs(targetP - smoothP) > 0.00025 || needsRumble)) {
-        rafId = requestAnimationFrame(tick)
-      } else {
-        smoothP = targetP
-        applyFrame(smoothP, now * 0.001)
-        rafId = 0
-      }
-    }
-
-    const wake = () => {
-      if (initialized && !inRange) return
-      if (!rafId) {
-        lastTime = performance.now()
-        rafId = requestAnimationFrame(tick)
-      }
-    }
-
-    let io: IntersectionObserver | null = null
-    if (typeof IntersectionObserver !== 'undefined' && runwayRef.current) {
-      io = new IntersectionObserver(
-        (entries) => {
-          const nextInRange = entries[0]?.isIntersecting ?? true
-          const prevInRange = inRange
-          inRange = nextInRange
-          if (inRange) {
-            wake()
-          } else if (prevInRange && initialized) {
-            if (rafId) {
-              cancelAnimationFrame(rafId)
-              rafId = 0
-            }
-            const clampedP = getCachedScrollY() < bounds.top ? 0 : 1
-            smoothP = clampedP
-            targetP = clampedP
-            applyFrame(clampedP, performance.now() * 0.001)
-          }
-        },
-        { rootMargin: '420px 0px' },
-      )
-      io.observe(runwayRef.current)
-    } else {
-      inRange = true
-    }
-
-    const unsubLayout = subscribeLayoutChange(() => {
-      bounds = measureElementBounds(runwayRef.current)
-      if (!initialized || inRange) wake()
-    })
-
-    wake()
-    window.addEventListener('scroll', wake, { passive: true })
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId)
-      io?.disconnect()
-      unsubLayout()
-      window.removeEventListener('scroll', wake)
-    }
-  }, [])
+  useLaunchChoreography({
+    runwayRef,
+    rocketWrapRef,
+    underGlowRef,
+    windowGlowRef,
+    stepRefs,
+    badgeRefs,
+    statusRef,
+    progressRef,
+    rocketOffsetRef,
+    wakeVfxRef,
+  })
 
   return (
     <section id="get-started" className="relative overflow-x-clip border-t border-white/10 bg-[#060913]">
@@ -248,3 +94,4 @@ export const LaunchSequenceSection = memo(function LaunchSequenceSection() {
     </section>
   )
 })
+export default LaunchSequenceSection

@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { TRANSLATIONS } from '~/i18n/translations'
 import {
   clamp01,
   computeRunwayProgress,
@@ -47,7 +46,7 @@ export function useFaqChoreography(refs: FaqChoreographyRefs) {
     let smoothP = 0
     let lastTypedLen = -1
     let inRange = false
-    let bounds = measureElementBounds(refs.runwayRef.current)
+    let bounds = { top: 0, height: 1 }
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -76,7 +75,7 @@ export function useFaqChoreography(refs: FaqChoreographyRefs) {
       if (refs.hookRef.current) {
         const hookIn = smootherstep(0.0, 0.05, p)
         const hookOut = smootherstep(0.11, 0.18, p)
-        const opacity = (0.35 + hookIn * 0.65) * (1 - hookOut)
+        const opacity = (0.85 + hookIn * 0.15) * (1 - hookOut)
         const tz = -120 * (1 - hookIn) + hookOut * 320
         const scale = 0.88 + hookIn * 0.12 + hookOut * 0.42
         const rx = 14 * (1 - hookIn) - hookOut * 14
@@ -108,7 +107,7 @@ export function useFaqChoreography(refs: FaqChoreographyRefs) {
       }
 
       if (refs.searchTextRef.current) {
-        const typingText = TRANSLATIONS[useUIStore.getState().locale].faq.searchTyping
+        const typingText = useUIStore.getState().translations.faq.searchTyping
         const typeP = clamp01((p - 0.2) / 0.11)
         const chars = Math.round(typeP * typingText.length)
         if (chars !== lastTypedLen) {
@@ -198,6 +197,8 @@ export function useFaqChoreography(refs: FaqChoreographyRefs) {
       targetP = computeRunwayProgress(bounds, scrollY, vh)
 
       if (!initialized) {
+        bounds = measureElementBounds(refs.runwayRef.current)
+        targetP = computeRunwayProgress(bounds, scrollY, vh)
         smoothP = targetP
         initialized = true
       } else {
@@ -258,7 +259,6 @@ export function useFaqChoreography(refs: FaqChoreographyRefs) {
       if (!initialized || inRange) wake()
     })
 
-    wake()
     window.addEventListener('scroll', wake, { passive: true })
     return () => {
       if (rafId) cancelAnimationFrame(rafId)

@@ -1,24 +1,30 @@
 import { memo, Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useUIStore } from '~/store/ui-store'
 import { useInView } from '~/lib/useInView'
-import { AutomationHubModel } from './ProductModels'
+import { AutomationHubModel } from './models/AutomationHubModel'
 import { HeroAppleStudioLighting } from './hero-scroll/HeroAppleStudioLighting'
-import { MACBOOK_MODEL_URL, RealMacBookProModel } from './hero-scroll/MacBookModel'
+import { RealMacBookProModel } from './hero-scroll/MacBookModel'
 
 interface HeroScrollSceneProps {
   scrollProgressRef: React.MutableRefObject<number>
+  onReady?: () => void
 }
 
 function ChoreographedStage({
   scrollProgressRef,
   isMobile,
+  onReady,
 }: {
   scrollProgressRef: React.MutableRefObject<number>
   isMobile: boolean
+  onReady?: () => void
 }) {
+  const onReadyRef = useRef(onReady)
+  onReadyRef.current = onReady
+  const readyFramesRef = useRef(0)
+  const readyNotifiedRef = useRef(false)
   const macbookRef = useRef<THREE.Group>(null)
   const screenMatRef = useRef<THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial | null>(null)
   const shadowMatRef = useRef<THREE.MeshBasicMaterial | null>(null)
@@ -30,7 +36,7 @@ function ChoreographedStage({
     const dt = Math.min(delta, 0.05)
     const width = state.size.width
     const height = state.size.height
-    const isMobile = width < 768
+    const mobileViewport = width < 768
     const sizeChanged =
       Math.abs(lastSizeRef.current.w - width) > 4 || Math.abs(lastSizeRef.current.h - height) > 4
     if (sizeChanged) {
@@ -45,7 +51,7 @@ function ChoreographedStage({
     const vw = state.viewport.width
     const isSmallMobile = width < 420
     const isTablet = width >= 768 && width < 1024
-    const pointerFactor = isMobile ? 0 : 1
+    const pointerFactor = mobileViewport ? 0 : 1
 
     const mx = state.pointer.x * 0.2 * pointerFactor
     const my = state.pointer.y * 0.14 * pointerFactor
@@ -54,21 +60,22 @@ function ChoreographedStage({
     const enterU = THREE.MathUtils.smoothstep(THREE.MathUtils.clamp((p - 0.16) / 0.36, 0, 1), 0, 1)
     const screenFadeU = THREE.MathUtils.smoothstep(THREE.MathUtils.clamp((p - 0.42) / 0.12, 0, 1), 0, 1)
 
-    const startX = isMobile ? 0 : isTablet ? Math.min(1.2, vw * 0.25) : 1.72
-    const startY = isMobile ? (isSmallMobile ? 1.0 : 0.96) : 0.26
-    const startScale = isMobile
+    const startX = mobileViewport ? 0 : isTablet ? Math.min(1.2, vw * 0.25) : 1.72
+    const startY = mobileViewport ? (isSmallMobile ? 1.0 : 0.96) : 0.26
+    const startScale = mobileViewport
       ? THREE.MathUtils.clamp(vw * 0.28, 0.44, 0.64)
       : isTablet
         ? 0.84
         : 1.08
 
     const macTargetX = THREE.MathUtils.lerp(startX, 0, centerU)
-    const macTargetY = THREE.MathUtils.lerp(startY, 0, centerU)
+    const macTargetY =
+      THREE.MathUtils.lerp(startY, 0, centerU) + Math.sin(centerU * Math.PI) * 0.36
     const macTargetZ = THREE.MathUtils.lerp(0.1, -1.25, enterU)
-    const macTargetScale = THREE.MathUtils.lerp(startScale, isMobile ? 4.2 : 5.4, enterU)
+    const macTargetScale = THREE.MathUtils.lerp(startScale, mobileViewport ? 4.2 : 5.4, enterU)
 
-    const startRotY = isMobile ? -0.14 : -0.38
-    const startRotX = isMobile ? 0.16 : 0.12
+    const startRotY = mobileViewport ? -0.14 : -0.38
+    const startRotX = mobileViewport ? 0.16 : 0.12
     const macRotY = THREE.MathUtils.lerp(startRotY, 0, centerU)
     const macRotX = THREE.MathUtils.lerp(startRotX, 0, centerU)
 
@@ -100,13 +107,13 @@ function ChoreographedStage({
       const mechOnScreenZ = 0.1 + 0.58 * startScale
 
       const mechFinalX = mx * 0.22
-      const mechFinalY = (isMobile ? 0.34 : -0.06) + my * 0.12 + Math.sin(t * 1.1) * 0.04
+      const mechFinalY = (mobileViewport ? 0.34 : -0.06) + my * 0.12 + Math.sin(t * 1.1) * 0.04
       const mechFinalZ = 0.65
 
       const emergeU = THREE.MathUtils.smoothstep(THREE.MathUtils.clamp((p - 0.14) / 0.4, 0, 1), 0, 1)
 
       const mechStartScale = startScale * 0.28
-      const mechEndScale = isMobile
+      const mechEndScale = mobileViewport
         ? THREE.MathUtils.clamp(vw * 0.27, 0.44, 0.62)
         : isTablet
           ? 0.92
@@ -132,6 +139,19 @@ function ChoreographedStage({
       mechanismRef.current.rotation.x =
         THREE.MathUtils.lerp(macRotX, 0.18, emergeU) + my * 0.16 * emergeU
     }
+
+    if (
+      !readyNotifiedRef.current &&
+      macbookRef.current &&
+      macbookRef.current.children.length > 0
+    ) {
+      readyFramesRef.current += 1
+      if (readyFramesRef.current >= 2) {
+        readyNotifiedRef.current = true
+        const cb = onReadyRef.current
+        if (cb) requestAnimationFrame(cb)
+      }
+    }
   })
 
   return (
@@ -154,21 +174,23 @@ function ChoreographedStage({
       </group>
 
       <group ref={mechanismRef} position={[1.62, 0.26, 0.73]} scale={0.3}>
-        <AutomationHubModel color="#38bdf8" />
+        <AutomationHubModel color="#38bdf8" isMobile={isMobile} />
       </group>
     </>
   )
 }
 
-useGLTF.preload(MACBOOK_MODEL_URL, false, true)
-
 export const HeroScrollScene = memo(function HeroScrollScene({
   scrollProgressRef,
+  onReady,
 }: HeroScrollSceneProps) {
   const [mounted, setMounted] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768,
+  )
   const { ref, inView } = useInView('150px', true)
   const modalOpen = useUIStore((s) => s.inspectorId !== null)
+  const preloaderOpen = useUIStore((s) => s.preloaderOpen)
 
   useEffect(() => {
     setMounted(true)
@@ -178,11 +200,12 @@ export const HeroScrollScene = memo(function HeroScrollScene({
     return () => window.removeEventListener('resize', updateMobile)
   }, [])
 
-  const active = inView && !modalOpen
+  const canRender = mounted && !preloaderOpen
+  const active = canRender && inView && !modalOpen
 
   return (
     <div ref={ref} className="h-full w-full">
-      {mounted && (
+      {canRender && (
         <Canvas
           frameloop={active ? 'always' : 'demand'}
           dpr={isMobile ? [1, 1.15] : [1, 1.75]}
@@ -196,9 +219,14 @@ export const HeroScrollScene = memo(function HeroScrollScene({
           }}
           style={{ width: '100%', height: '100%' }}
         >
-          <ChoreographedStage scrollProgressRef={scrollProgressRef} isMobile={isMobile} />
+          <ChoreographedStage
+            scrollProgressRef={scrollProgressRef}
+            isMobile={isMobile}
+            onReady={onReady}
+          />
         </Canvas>
       )}
     </div>
   )
 })
+export default HeroScrollScene

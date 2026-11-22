@@ -15,7 +15,7 @@ export function RealMacBookProModel({
   isMobile?: boolean
 }) {
   const gltf = useGLTF(MACBOOK_MODEL_URL, false, true)
-  const screenTexture = useMacBookCleanScreenTexture()
+  const screenTexture = useMacBookCleanScreenTexture(isMobile)
   const shadowTexture = useStudioShadowTexture()
 
   const { clonedScene, normScale, offset, baseBottomY } = useMemo(() => {
@@ -47,7 +47,82 @@ export function RealMacBookProModel({
   }, [gltf.scene])
 
   useEffect(() => {
-    const createdMats: THREE.Material[] = []
+    const screenMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          map: screenTexture ?? undefined,
+          emissiveMap: screenTexture ?? undefined,
+          color: new THREE.Color('#ffffff'),
+          emissive: new THREE.Color('#ffffff'),
+          emissiveIntensity: 1.0,
+          roughness: 0.08,
+          metalness: 0.05,
+          envMapIntensity: 0.55,
+          transparent: true,
+          opacity: 1,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          map: screenTexture ?? undefined,
+          emissiveMap: screenTexture ?? undefined,
+          color: new THREE.Color('#ffffff'),
+          emissive: new THREE.Color('#ffffff'),
+          emissiveIntensity: 1.0,
+          roughness: 0.08,
+          metalness: 0.05,
+          clearcoat: 0.9,
+          clearcoatRoughness: 0.06,
+          reflectivity: 0.95,
+          envMapIntensity: 0.55,
+          transparent: true,
+          opacity: 1,
+        })
+
+    const keyMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#0a0d14'),
+          metalness: 0.14,
+          roughness: 0.72,
+          envMapIntensity: 0.65,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color('#0a0d14'),
+          metalness: 0.14,
+          roughness: 0.72,
+          envMapIntensity: 0.65,
+        })
+
+    const bezelMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#04060a'),
+          metalness: 0.1,
+          roughness: 0.06,
+          envMapIntensity: 1.95,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color('#04060a'),
+          metalness: 0.1,
+          roughness: 0.06,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.04,
+          reflectivity: 1.0,
+          envMapIntensity: 1.95,
+        })
+
+    const metalMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#c9d1de'),
+          metalness: 0.94,
+          roughness: 0.19,
+          envMapIntensity: 2.25,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color('#c9d1de'),
+          metalness: 0.94,
+          roughness: 0.19,
+          clearcoat: 0.35,
+          clearcoatRoughness: 0.16,
+          reflectivity: 0.95,
+          envMapIntensity: 2.25,
+        })
 
     clonedScene.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return
@@ -55,100 +130,26 @@ export function RealMacBookProModel({
       const matName = mat && !Array.isArray(mat) ? mat.name : ''
 
       if (obj.name === 'Screen' || matName === 'sfCQkHOWyrsLmor') {
-        const nextMat = isMobile
-          ? new THREE.MeshStandardMaterial({
-              map: screenTexture ?? undefined,
-              emissiveMap: screenTexture ?? undefined,
-              color: new THREE.Color('#ffffff'),
-              emissive: new THREE.Color('#ffffff'),
-              emissiveIntensity: 1.0,
-              roughness: 0.08,
-              metalness: 0.05,
-              envMapIntensity: 0.55,
-              transparent: true,
-              opacity: 1,
-            })
-          : new THREE.MeshPhysicalMaterial({
-              map: screenTexture ?? undefined,
-              emissiveMap: screenTexture ?? undefined,
-              color: new THREE.Color('#ffffff'),
-              emissive: new THREE.Color('#ffffff'),
-              emissiveIntensity: 1.0,
-              roughness: 0.08,
-              metalness: 0.05,
-              clearcoat: 0.9,
-              clearcoatRoughness: 0.06,
-              reflectivity: 0.95,
-              envMapIntensity: 0.55,
-              transparent: true,
-              opacity: 1,
-            })
-        obj.material = nextMat
-        screenMatRef.current = nextMat
-        createdMats.push(nextMat)
+        obj.material = screenMat
+        screenMatRef.current = screenMat
       } else if (matName === 'eJObPwhgFzvfaoZ') {
-        const keyMat = isMobile
-          ? new THREE.MeshStandardMaterial({
-              color: new THREE.Color('#0a0d14'),
-              metalness: 0.14,
-              roughness: 0.72,
-              envMapIntensity: 0.65,
-            })
-          : new THREE.MeshPhysicalMaterial({
-              color: new THREE.Color('#0a0d14'),
-              metalness: 0.14,
-              roughness: 0.72,
-              envMapIntensity: 0.65,
-            })
         obj.material = keyMat
-        createdMats.push(keyMat)
       } else if (
         matName === 'WnHKXHhScfUbJQi' ||
         matName === 'fNHiBfcxHUJCahl' ||
         matName === 'LtEafgAVRolQqRw'
       ) {
-        const bezelMat = isMobile
-          ? new THREE.MeshStandardMaterial({
-              color: new THREE.Color('#04060a'),
-              metalness: 0.1,
-              roughness: 0.06,
-              envMapIntensity: 1.95,
-            })
-          : new THREE.MeshPhysicalMaterial({
-              color: new THREE.Color('#04060a'),
-              metalness: 0.1,
-              roughness: 0.06,
-              clearcoat: 1.0,
-              clearcoatRoughness: 0.04,
-              reflectivity: 1.0,
-              envMapIntensity: 1.95,
-            })
         obj.material = bezelMat
-        createdMats.push(bezelMat)
       } else if (mat instanceof THREE.MeshStandardMaterial) {
-        const metalMat = isMobile
-          ? new THREE.MeshStandardMaterial({
-              color: new THREE.Color('#c9d1de'),
-              metalness: 0.94,
-              roughness: 0.19,
-              envMapIntensity: 2.25,
-            })
-          : new THREE.MeshPhysicalMaterial({
-              color: new THREE.Color('#c9d1de'),
-              metalness: 0.94,
-              roughness: 0.19,
-              clearcoat: 0.35,
-              clearcoatRoughness: 0.16,
-              reflectivity: 0.95,
-              envMapIntensity: 2.25,
-            })
         obj.material = metalMat
-        createdMats.push(metalMat)
       }
     })
 
     return () => {
-      createdMats.forEach((m) => m.dispose())
+      screenMat.dispose()
+      keyMat.dispose()
+      bezelMat.dispose()
+      metalMat.dispose()
     }
   }, [clonedScene, screenTexture, screenMatRef, isMobile])
 

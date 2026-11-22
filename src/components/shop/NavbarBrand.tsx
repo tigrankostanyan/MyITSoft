@@ -9,8 +9,10 @@ export const NavbarBrand = memo(function NavbarBrand({ compact = false }: Navbar
     <>
       <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#0c1630] p-1.5 shadow-lg shadow-[#1e40af]/35 ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-105 sm:h-10 sm:w-10">
         <img
-          src="/myitsoft-logo.png"
+          src="/myitsoft-logo.webp"
           alt="MyITSoft"
+          width={96}
+          height={78}
           className="h-full w-full object-contain"
         />
       </div>
@@ -19,9 +21,9 @@ export const NavbarBrand = memo(function NavbarBrand({ compact = false }: Navbar
           <div className="font-display text-xs tracking-tight text-white sm:text-sm">
             MyITSoft
           </div>
-          <div className="mt-1 flex items-center gap-1.5 font-mono-tech text-[9px] tracking-[0.18em] text-white/70">
+          <div className="mt-1 flex items-center gap-1.5 font-mono-tech text-[9px] tracking-[0.18em] text-white/75">
             <span className="h-1.5 w-1.5 rounded-full bg-[#00e5ff] shadow-[0_0_8px_#00e5ff]" />
-            <span>MyITSoft Company</span>
+            <span>Discover the IT world</span>
           </div>
         </div>
       )}

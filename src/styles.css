@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../src";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -12,9 +13,9 @@
   --color-obsidian: #161622;
   --color-surface: #1e1e2d;
   --color-surface-hover: #262638;
-  --font-display: "Noto Sans Armenian", "Archivo Black", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Noto Sans Armenian", "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Noto Sans Armenian", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Black", "Space Grotesk", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Noto Sans Armenian", ui-monospace, monospace;
 }
 
@@ -258,7 +259,6 @@ html.lenis body {
   animation-name: hero-logo-float;
   animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
   animation-iteration-count: infinite;
-  will-change: transform;
 }
 
 @supports (height: 100svh) {
@@ -314,4 +314,160 @@ html.lenis body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.animate-toast-enter {
+  animation: toast-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-toast-progress {
+  animation: toast-progress 3400ms linear forwards;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes drawer-slide-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-modal-fade {
+  animation: modal-fade-in 220ms ease-out both;
+}
+
+.animate-modal-pop {
+  animation: modal-pop-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-drawer-in {
+  animation: drawer-slide-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes preloader-shell-exit {
+  0%,
+  50% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -100%, 0);
+    pointer-events: none;
+  }
+}
+
+@keyframes preloader-logo-in {
+  from {
+    opacity: 0.18;
+    transform: translate3d(0, 20px, 0) scale(0.84);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes preloader-sub-in {
+  from {
+    opacity: 0.15;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes preloader-letter-rise {
+  from {
+    transform: translate3d(0, 16px, 0) scale(0.94);
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes preloader-letter-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes preloader-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.preloader-shell {
+  animation: preloader-shell-exit 0.42s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.preloader-logo {
+  animation: preloader-logo-in 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.preloader-sub {
+  animation: preloader-sub-in 140ms cubic-bezier(0.22, 1, 0.36, 1) 25ms both;
+}
+
+.preloader-letter-wrap {
+  animation: preloader-letter-rise 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.preloader-letter-fill {
+  animation: preloader-letter-reveal 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.preloader-bar {
+  animation: preloader-bar-fill 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }

@@ -6,7 +6,17 @@ const PIN_OFFSETS = [-0.27, -0.18, -0.09, 0, 0.09, 0.18, 0.27]
 const LGA_OFFSETS = [-0.18, -0.09, 0, 0.09, 0.18]
 const DUMMY_OBJ = new THREE.Object3D()
 
-export function HubCpu({ groupRef, exploded, wire }: { groupRef: React.Ref<THREE.Group>; exploded: number; wire: boolean }) {
+export function HubCpu({
+  groupRef,
+  exploded,
+  wire,
+  isMobile = false,
+}: {
+  groupRef: React.Ref<THREE.Group>
+  exploded: number
+  wire: boolean
+  isMobile?: boolean
+}) {
   const cpuTexture = useCpuCoreTexture()
   const lgaRef = useRef<THREE.InstancedMesh>(null)
   const pinsRef = useRef<THREE.InstancedMesh>(null)
@@ -60,14 +70,24 @@ export function HubCpu({ groupRef, exploded, wire }: { groupRef: React.Ref<THREE
     <group ref={groupRef} scale={0.82}>
       <mesh>
         <boxGeometry args={[0.74, 0.74, 0.075]} />
-        <meshPhysicalMaterial
-          color="#0f172a"
-          metalness={0.55}
-          roughness={0.28}
-          clearcoat={0.5}
-          envMapIntensity={1.5}
-          wireframe={wire}
-        />
+        {isMobile ? (
+          <meshStandardMaterial
+            color="#0f172a"
+            metalness={0.55}
+            roughness={0.28}
+            envMapIntensity={1.5}
+            wireframe={wire}
+          />
+        ) : (
+          <meshPhysicalMaterial
+            color="#0f172a"
+            metalness={0.55}
+            roughness={0.28}
+            clearcoat={0.5}
+            envMapIntensity={1.5}
+            wireframe={wire}
+          />
+        )}
       </mesh>
 
       <mesh>
@@ -83,14 +103,24 @@ export function HubCpu({ groupRef, exploded, wire }: { groupRef: React.Ref<THREE
 
       <mesh position={[0, 0, 0.062 + exploded * 0.14]}>
         <boxGeometry args={[0.6, 0.6, 0.056]} />
-        <meshPhysicalMaterial
-          color="#e2e8f0"
-          metalness={0.92}
-          roughness={0.18}
-          clearcoat={0.6}
-          envMapIntensity={2.15}
-          wireframe={wire}
-        />
+        {isMobile ? (
+          <meshStandardMaterial
+            color="#e2e8f0"
+            metalness={0.92}
+            roughness={0.18}
+            envMapIntensity={2.15}
+            wireframe={wire}
+          />
+        ) : (
+          <meshPhysicalMaterial
+            color="#e2e8f0"
+            metalness={0.92}
+            roughness={0.18}
+            clearcoat={0.6}
+            envMapIntensity={2.15}
+            wireframe={wire}
+          />
+        )}
       </mesh>
 
       <mesh position={[0, 0, 0.094 + exploded * 0.18]}>

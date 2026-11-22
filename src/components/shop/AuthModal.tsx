@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { CheckCircle2, ShieldCheck, Sparkles, Truck, X } from 'lucide-react'
 import { useUIStore } from '~/store/ui-store'
 
@@ -43,139 +42,116 @@ export function AuthModal() {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, setOpen])
 
-  const handleGoogleContinue = () => {
-    setGoogleClicked(true)
-  }
+  if (!open) return null
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.22 }}
+    <div
+      onClick={() => setOpen(false)}
+      className="animate-modal-fade fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        className="animate-modal-pop relative w-full max-w-[440px] overflow-hidden rounded-3xl border border-white/15 bg-[#191929]/95 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:p-8"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#5c4aff]/35 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent"
+        />
+
+        <button
+          type="button"
+          aria-label="Փակել պատուհանը"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+          className="absolute top-4 right-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-white/75 transition hover:border-white/30 hover:bg-white/15 hover:text-white cursor-pointer"
         >
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="auth-modal-title"
-            initial={{ opacity: 0, scale: 0.94, y: 18 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-[440px] overflow-hidden rounded-3xl border border-white/15 bg-[#191929]/95 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl sm:p-8"
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="flex h-15 w-15 items-center justify-center rounded-2xl bg-white/95 p-2 shadow-xl shadow-[#2563eb]/45 ring-1 ring-white/35">
+            <img
+              src="/myitsoft-logo.webp"
+              alt="MyITSoft"
+              width={192}
+              height={155}
+              loading="lazy"
+              className="h-full w-full object-contain"
+            />
+          </div>
+
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#38bdf8]/35 bg-[#2563eb]/20 px-3 py-1 font-mono-tech text-[10px] font-bold tracking-[0.16em] text-[#bae6fd]">
+            <Sparkles className="h-3 w-3 text-[#00e5ff]" aria-hidden="true" />
+            MyITSoft ՊՈՐՏԱԼ
+          </span>
+
+          <h2
+            id="auth-modal-title"
+            className="font-display mt-3.5 text-2xl tracking-tight text-white sm:text-[26px]"
           >
-            {/* Ambient decorative top glow */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#5c4aff]/35 blur-3xl"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent"
-            />
+            Մուտք և Գրանցում
+          </h2>
 
-            {/* Close button */}
-            <button
-              type="button"
-              aria-label="Փակել պատուհանը"
-              onClick={() => setOpen(false)}
-              className="absolute top-4 right-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-white/70 transition hover:border-white/30 hover:bg-white/15 hover:text-white cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/65">
+            Միացեք մեկ սեղմումով՝ ձեր նախագծերին, հաշիվներին և տեխնիկական աջակցությանը
+            հետևելու համար։
+          </p>
 
-            <div className="relative z-10 flex flex-col items-center text-center">
-              {/* Brand Emblem */}
-              <div className="flex h-15 w-15 items-center justify-center rounded-2xl bg-white/95 p-2 shadow-xl shadow-[#2563eb]/45 ring-1 ring-white/35">
-                <img
-                  src="/myitsoft-logo.png"
-                  alt="MyITSoft"
-                  className="h-full w-full object-contain"
-                />
+          <button
+            type="button"
+            onClick={() => setGoogleClicked(true)}
+            className="group mt-7 flex h-13 w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 text-sm font-bold text-[#161622] shadow-[0_10px_28px_rgba(255,255,255,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#f4f3ff] hover:shadow-[0_14px_34px_rgba(124,108,255,0.35)] active:translate-y-0 cursor-pointer"
+          >
+            <GoogleIcon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span>Շարունակել Google-ով</span>
+          </button>
+
+          {googleClicked && (
+            <div className="mt-3.5 w-full overflow-hidden">
+              <div className="flex items-center gap-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/12 px-3.5 py-2.5 text-left text-xs text-emerald-200">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                <span>
+                  Google մուտքը պատրաստ է ինտեգրման․ բեքենդը միացնելուց հետո ավտորիզացիան
+                  կաշխատի անմիջապես։
+                </span>
               </div>
-
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#38bdf8]/35 bg-[#2563eb]/20 px-3 py-1 font-mono-tech text-[10px] font-bold tracking-[0.16em] text-[#bae6fd]">
-                <Sparkles className="h-3 w-3 text-[#00e5ff]" />
-                MyITSoft ՊՈՐՏԱԼ
-              </span>
-
-              <h2
-                id="auth-modal-title"
-                className="font-display mt-3.5 text-2xl tracking-tight text-white sm:text-[26px]"
-              >
-                Մուտք և Գրանցում
-              </h2>
-
-              <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
-                Միացեք մեկ սեղմումով՝ ձեր նախագծերին, հաշիվներին և տեխնիկական աջակցությանը
-                հետևելու համար։
-              </p>
-
-              {/* Google OAuth Button */}
-              <button
-                type="button"
-                onClick={handleGoogleContinue}
-                className="group mt-7 flex h-13 w-full items-center justify-center gap-3 rounded-2xl bg-white px-5 text-sm font-bold text-[#161622] shadow-[0_10px_28px_rgba(255,255,255,0.16)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#f4f3ff] hover:shadow-[0_14px_34px_rgba(124,108,255,0.35)] active:translate-y-0 cursor-pointer"
-              >
-                <GoogleIcon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                <span>Շարունակել Google-ով</span>
-              </button>
-
-              {/* Feedback banner when clicked (until backend OAuth is connected) */}
-              <AnimatePresence>
-                {googleClicked && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: 'auto' }}
-                    exit={{ opacity: 0, y: -4, height: 0 }}
-                    className="mt-3.5 w-full overflow-hidden"
-                  >
-                    <div className="flex items-center gap-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/12 px-3.5 py-2.5 text-left text-xs text-emerald-200">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                      <span>
-                        Google մուտքը պատրաստ է ինտեգրման․ բեքենդը միացնելուց հետո ավտորիզացիան
-                        կաշխատի անմիջապես։
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="mt-6 grid w-full grid-cols-1 gap-2.5 min-[360px]:grid-cols-2">
-                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-left">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4f3bff]/20 text-[#a99eff]">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white">Արագ պատվեր</div>
-                    <div className="text-[11px] text-white/50">Պահված հասցեներ</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-left">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00e5ff]/15 text-[#00e5ff]">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-white">Ապահով մուտք</div>
-                    <div className="text-[11px] text-white/50">Google OAuth 2.0</div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="mt-5 text-[11px] leading-relaxed text-white/40">
-                Շարունակելով՝ դուք համաձայնում եք «MyIT»-ի օգտագործման պայմաններին և
-                գաղտնիության քաղաքականությանը։
-              </p>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          )}
+
+          <div className="mt-6 grid w-full grid-cols-1 gap-2.5 min-[360px]:grid-cols-2">
+            <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-left">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#4f3bff]/20 text-[#a99eff]">
+                <Truck className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-white">Արագ պատվեր</div>
+                <div className="text-[11px] text-white/60">Պահված հասցեներ</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-left">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00e5ff]/15 text-[#00e5ff]">
+                <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-white">Ապահով մուտք</div>
+                <div className="text-[11px] text-white/60">Google OAuth 2.0</div>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-5 text-[11px] leading-relaxed text-white/55">
+            Շարունակելով՝ դուք համաձայնում եք «MyIT»-ի օգտագործման պայմաններին և
+            գաղտնիության քաղաքականությանը։
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

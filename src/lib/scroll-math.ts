@@ -137,49 +137,80 @@ export function computeRunwayProgress(
   return clamp01((scrollY - bounds.top) / range)
 }
 
-/** Subscribes to meaningful layout changes (width resizes or document height shifts), ignoring mobile URL-bar jitter. */
-export function subscribeLayoutChange(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => {}
+const layoutSubscribers = new Set<() => void>()
+let layoutObserverActive = false
+let prevObservedVw = 0
+let prevObservedBodyH = -1
+let layoutTimerId = 0
+let sharedResizeObserver: ResizeObserver | null = null
 
-  let prevVw = window.innerWidth || 0
-  let prevBodyH = document.body?.scrollHeight || 0
-  let timerId = 0
-
-  const onResize = () => {
-    const vw = window.innerWidth || 0
-    if (Math.abs(vw - prevVw) > 15) {
-      prevVw = vw
-      prevBodyH = document.body?.scrollHeight || 0
-      cb()
-    }
+const notifyLayoutSubscribers = () => {
+  for (const listener of layoutSubscribers) {
+    listener()
   }
+}
 
-  window.addEventListener('resize', onResize, { passive: true })
+const onSharedResize = () => {
+  const vw = getStableViewportWidth()
+  if (Math.abs(vw - prevObservedVw) > 15) {
+    prevObservedVw = vw
+    notifyLayoutSubscribers()
+  }
+}
 
-  let ro: ResizeObserver | null = null
+function attachSharedLayoutObserver() {
+  if (layoutObserverActive || typeof window === 'undefined') return
+  layoutObserverActive = true
+  prevObservedVw = getStableViewportWidth()
+  prevObservedBodyH = -1
+
+  window.addEventListener('resize', onSharedResize, { passive: true })
+
   if (typeof ResizeObserver !== 'undefined' && document.body) {
-    ro = new ResizeObserver(() => {
-      if (timerId) window.clearTimeout(timerId)
-      timerId = window.setTimeout(() => {
-        timerId = 0
-        const nextVw = window.innerWidth || 0
-        const nextBodyH = document.body?.scrollHeight || 0
+    sharedResizeObserver = new ResizeObserver((entries) => {
+      const nextBodyH = Math.round(entries[0]?.contentRect.height ?? 0)
+      if (layoutTimerId) window.clearTimeout(layoutTimerId)
+      layoutTimerId = window.setTimeout(() => {
+        layoutTimerId = 0
+        const nextVw = getStableViewportWidth()
         const isMobile = nextVw < 1024
         const hThreshold = isMobile ? 220 : 8
-        if (Math.abs(nextBodyH - prevBodyH) > hThreshold || Math.abs(nextVw - prevVw) > 15) {
-          prevVw = nextVw
-          prevBodyH = nextBodyH
-          cb()
+        if (prevObservedBodyH < 0) {
+          prevObservedBodyH = nextBodyH
+          prevObservedVw = nextVw
+          return
+        }
+        if (Math.abs(nextBodyH - prevObservedBodyH) > hThreshold || Math.abs(nextVw - prevObservedVw) > 15) {
+          prevObservedVw = nextVw
+          prevObservedBodyH = nextBodyH
+          notifyLayoutSubscribers()
         }
       }, 150)
     })
-    ro.observe(document.body)
+    sharedResizeObserver.observe(document.body)
   }
+}
 
+function detachSharedLayoutObserverIfIdle() {
+  if (layoutSubscribers.size > 0 || !layoutObserverActive || typeof window === 'undefined') return
+  layoutObserverActive = false
+  window.removeEventListener('resize', onSharedResize)
+  sharedResizeObserver?.disconnect()
+  sharedResizeObserver = null
+  if (layoutTimerId) {
+    window.clearTimeout(layoutTimerId)
+    layoutTimerId = 0
+  }
+}
+
+/** Subscribes to meaningful layout changes via one shared ResizeObserver without synchronous scrollHeight reflows. */
+export function subscribeLayoutChange(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  layoutSubscribers.add(cb)
+  attachSharedLayoutObserver()
   return () => {
-    window.removeEventListener('resize', onResize)
-    ro?.disconnect()
-    if (timerId) window.clearTimeout(timerId)
+    layoutSubscribers.delete(cb)
+    detachSharedLayoutObserverIfIdle()
   }
 }
 

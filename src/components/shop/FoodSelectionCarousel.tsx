@@ -1,5 +1,4 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { Box, CheckCircle2 } from 'lucide-react'
 import { useTranslations, useUIStore } from '~/store/ui-store'
 import { useCartStore } from '~/store/cart-store'
 import { SERVICE_STEPS } from './carousel/carouselData'
@@ -12,6 +11,8 @@ import { Slide1 } from './carousel/Slide1'
 import { Slide2 } from './carousel/Slide2'
 import { Slide3 } from './carousel/Slide3'
 import { Slide4 } from './carousel/Slide4'
+import { MobileSolutionSummary } from './carousel/MobileSolutionSummary'
+import { CarouselStepDots } from './carousel/CarouselStepDots'
 
 export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
   const runwayRef = useRef<HTMLDivElement>(null)
@@ -32,11 +33,12 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
   const addedTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const check = () => setIsDesktop(window.innerWidth >= 640)
-    check()
-    window.addEventListener('resize', check, { passive: true })
+    const mql = window.matchMedia('(min-width: 640px)')
+    const sync = () => setIsDesktop(mql.matches)
+    sync()
+    mql.addEventListener('change', sync)
     return () => {
-      window.removeEventListener('resize', check)
+      mql.removeEventListener('change', sync)
       if (addedTimerRef.current !== null) window.clearTimeout(addedTimerRef.current)
     }
   }, [])
@@ -61,7 +63,7 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
     setActiveStepIdx,
   )
 
-    const handleStageMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleStageMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (window.innerWidth < 1024) return
     const el = stage3DRef.current
     if (!el) return
@@ -103,7 +105,6 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
 
   const activeStep = SERVICE_STEPS[activeStepIdx]
   const activeStepText = t.carousel.steps[activeStepIdx] ?? activeStep
-  const isMobileAdded = addedId === activeStep.productId
 
   const slideFrame = (idx: number, child: React.ReactNode) => (
     <SlideFrame idx={idx} slideRefs={slideRefs}>
@@ -189,29 +190,11 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
                     })}
                   </div>
 
-                  {/* Clean Minimal Mobile Solution Summary */}
-                  <div className="mx-auto flex max-w-[360px] flex-col justify-between px-1 text-center lg:hidden">
-                    <h3 className="font-heading text-[16px] leading-snug font-bold tracking-tight text-white min-[380px]:text-[18px]">
-                      {activeStepText.title}
-                    </h3>
-
-                    <p className="mx-auto mt-1 line-clamp-2 max-w-[330px] text-[11.5px] leading-snug text-sky-100/72 min-[380px]:text-[12.5px]">
-                      {activeStepText.shortDesc}
-                    </p>
-
-                    <div className="mx-auto mt-3 flex w-full max-w-[260px] justify-center">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const el = document.getElementById('footer-audit')
-                          el?.scrollIntoView({ behavior: 'smooth' })
-                        }}
-                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-white px-4 py-2.5 font-heading text-[11px] font-bold whitespace-nowrap text-[#070d1e] uppercase shadow-[0_8px_24px_rgba(56,189,248,0.28)] transition hover:bg-[#38bdf8] cursor-pointer"
-                      >
-                        <span>{t.carousel.discussProject}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <MobileSolutionSummary
+                    title={activeStepText.title}
+                    shortDesc={activeStepText.shortDesc}
+                    ctaLabel={t.carousel.discussProject}
+                  />
                 </div>
 
                 <div
@@ -237,28 +220,11 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
                 </div>
               </div>
 
-              <div className="mt-3.5 hidden items-center justify-center lg:flex">
-                <div className="flex items-center gap-2">
-                  {SERVICE_STEPS.map((s, idx) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      aria-label={s.title}
-                      onClick={() => jumpToStep(idx)}
-                      className="h-1.5 w-7 cursor-pointer overflow-hidden rounded-full bg-white/20"
-                    >
-                      <span
-                        className="block h-full w-full origin-center rounded-full transition-transform duration-300"
-                        style={{
-                          backgroundColor:
-                            idx === activeStepIdx ? '#7dd3fc' : 'rgba(255,255,255,0.35)',
-                          transform: idx === activeStepIdx ? 'scaleX(1)' : 'scaleX(0.32)',
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <CarouselStepDots
+                steps={SERVICE_STEPS}
+                activeStepIdx={activeStepIdx}
+                onJump={jumpToStep}
+              />
             </div>
           </div>
         </div>
@@ -266,3 +232,4 @@ export const FoodSelectionCarousel = memo(function FoodSelectionCarousel() {
     </section>
   )
 })
+export default FoodSelectionCarousel

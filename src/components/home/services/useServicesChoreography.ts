@@ -90,7 +90,7 @@ export function useServicesChoreography(
     let smoothEntryP = 0
     let lastSpotIdx: number | null = null
     let inRange = false
-    let bounds = measureElementBounds(refs.runwayRef.current)
+    let bounds = { top: 0, height: 1 }
 
     const getEntryProgress = (scrollY: number, vh: number): number => {
       const rectTop = bounds.top - scrollY
@@ -229,6 +229,9 @@ export function useServicesChoreography(
       targetEntryP = getEntryProgress(scrollY, vh)
 
       if (!initialized) {
+        bounds = measureElementBounds(refs.runwayRef.current)
+        targetP = computeRunwayProgress(bounds, scrollY, vh)
+        targetEntryP = getEntryProgress(scrollY, vh)
         smoothP = targetP
         smoothEntryP = targetEntryP
         initialized = true
@@ -301,7 +304,6 @@ export function useServicesChoreography(
       if (!initialized || inRange) wake()
     })
 
-    wake()
     window.addEventListener('scroll', wake, { passive: true })
     return () => {
       if (rafId) cancelAnimationFrame(rafId)

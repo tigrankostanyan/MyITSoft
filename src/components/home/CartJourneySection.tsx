@@ -111,3 +111,4 @@ export const CartJourneySection = memo(function CartJourneySection({
     </div>
   )
 })
+export default CartJourneySection

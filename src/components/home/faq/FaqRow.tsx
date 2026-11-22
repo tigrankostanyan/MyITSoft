@@ -1,5 +1,4 @@
 import { memo } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import type { FaqItem } from './faqData'
 
@@ -31,6 +30,7 @@ export const FaqRow = memo(function FaqRow({
     >
       <button
         type="button"
+        aria-expanded={isOpen}
         onClick={() => onToggle(idx)}
         className="flex w-full items-center justify-between gap-2.5 py-3.5 text-left transition-colors duration-200 min-[380px]:gap-4 min-[380px]:py-4 sm:gap-8 sm:py-7 lg:py-8 cursor-pointer"
       >
@@ -59,27 +59,24 @@ export const FaqRow = memo(function FaqRow({
         </div>
 
         <ChevronDown
+          aria-hidden="true"
           className={`h-4 w-4 shrink-0 transition-all duration-300 min-[380px]:h-5 min-[380px]:w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 ${
-            isOpen ? 'rotate-180 text-[#00e5ff]' : 'text-white/45 group-hover:text-white/90'
+            isOpen ? 'rotate-180 text-[#00e5ff]' : 'text-white/60 group-hover:text-white/95'
           }`}
         />
       </button>
 
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
-          >
-            <p className="pb-4 pl-[52px] pr-2 text-xs leading-relaxed text-sky-100/78 min-[380px]:pl-[64px] min-[380px]:text-sm sm:pb-6 sm:pl-[102px] sm:pr-12 sm:text-base lg:text-[18px] lg:leading-relaxed">
-              {item.a}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <p className="pb-4 pl-[52px] pr-2 text-xs leading-relaxed text-sky-100/80 min-[380px]:pl-[64px] min-[380px]:text-sm sm:pb-6 sm:pl-[102px] sm:pr-12 sm:text-base lg:text-[18px] lg:leading-relaxed">
+            {item.a}
+          </p>
+        </div>
+      </div>
 
       {!isLast && (
         <div className="ml-[40px] min-[380px]:ml-[48px] sm:ml-[70px]">

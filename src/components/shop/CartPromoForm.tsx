@@ -28,8 +28,9 @@ export const CartPromoForm = memo(function CartPromoForm() {
             type="text"
             value={promoInput}
             onChange={(e) => setPromoInput(e.target.value)}
+            aria-label={t.cartDrawer.promoPlaceholder}
             placeholder={t.cartDrawer.promoPlaceholder}
-            className="w-full rounded-full border border-white/15 bg-white/5 py-2 pr-3 pl-9 font-mono-tech text-xs text-white placeholder:text-white/35 focus:border-[#38bdf8] focus:outline-none"
+            className="w-full rounded-full border border-white/15 bg-white/5 py-2 pr-3 pl-9 font-mono-tech text-xs text-white placeholder:text-white/45 focus:border-[#38bdf8] focus:outline-none"
           />
         </div>
         <button

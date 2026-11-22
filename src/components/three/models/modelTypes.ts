@@ -1,6 +1,9 @@
+import type { MutableRefObject } from 'react'
+
 export interface ModelProps {
   color?: string
   exploded?: number
   hologram?: boolean
-  explodeRef?: React.MutableRefObject<number>
+  isMobile?: boolean
+  explodeRef?: MutableRefObject<number>
 }

@@ -1,35 +1,97 @@
-import { useCallback, useRef } from 'react'
+import { lazy, startTransition, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useUIStore } from '~/store/ui-store'
 import { useHomeScrollChoreography } from '~/lib/useHomeScrollChoreography'
 import { Preloader } from '~/components/shop/Preloader'
 import { Navbar } from '~/components/shop/Navbar'
-import { FoodSelectionCarousel } from '~/components/shop/FoodSelectionCarousel'
-import { Product3DModal } from '~/components/shop/Product3DModal'
-import { CartDrawer } from '~/components/shop/CartDrawer'
 import { HeroSection } from '~/components/home/HeroSection'
-import { ServicesSection } from '~/components/home/ServicesSection'
-import { CartJourneySection } from '~/components/home/CartJourneySection'
-import { TeamSection } from '~/components/home/TeamSection'
-import { FaqSection } from '~/components/home/FaqSection'
-import { LaunchSequenceSection } from '~/components/home/LaunchSequenceSection'
-import { NewsletterFooter } from '~/components/home/NewsletterFooter'
+import {
+  BelowFoldFooter,
+  BelowFoldMainSections,
+} from '~/components/home/BelowFoldSections'
 
-export const Route = createFileRoute('/')({ component: Home })
+const CartDrawer = lazy(() => import('~/components/shop/CartDrawer'))
 
-const ENABLE_TEAM_SECTION = false
+export const Route = createFileRoute('/')({
+  head: () => ({
+    links: [
+      {
+        rel: 'preload',
+        as: 'image',
+        href: '/images/hero-stage-mobile.webp',
+        media: '(max-width: 767px)',
+        fetchPriority: 'high',
+      },
+      {
+        rel: 'preload',
+        as: 'image',
+        imageSrcSet:
+          '/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop.webp 777w',
+        imageSizes: 'min(54vw, 86.3vh)',
+        media: '(min-width: 768px)',
+        fetchPriority: 'high',
+      },
+    ],
+  }),
+  component: Home,
+})
 
 function Home() {
   const heroTrackRef = useRef<HTMLDivElement>(null)
   const scrollProgressRef = useRef(0)
   const heroLogoRefs = useRef<(HTMLDivElement | null)[]>([])
+  const heroDarkenRef = useRef<HTMLDivElement>(null)
+  const heroContentRef = useRef<HTMLDivElement>(null)
+  const heroPosterRef = useRef<HTMLDivElement>(null)
 
   const cartTrackRef = useRef<HTMLDivElement>(null)
   const cartProgressRef = useRef(0)
   const cartSpotlightRef = useRef<HTMLDivElement>(null)
   const cartFloorGlowRef = useRef<HTMLDivElement>(null)
 
-  const openInspector = useUIStore((s) => s.openInspector)
+  const [belowFoldMounted, setBelowFoldMounted] = useState(false)
+
+  useEffect(() => {
+    if (window.scrollY > 4 || Boolean(window.location.hash)) {
+      startTransition(() => setBelowFoldMounted(true))
+      return
+    }
+
+    let triggered = false
+    const mountBelowFold = () => {
+      if (triggered) return
+      triggered = true
+      cleanup()
+      startTransition(() => setBelowFoldMounted(true))
+    }
+
+    const onScroll = () => {
+      if (window.scrollY > 4) mountBelowFold()
+    }
+
+    const events: (keyof WindowEventMap)[] = [
+      'pointerdown',
+      'wheel',
+      'touchstart',
+      'keydown',
+    ]
+
+    const cleanup = () => {
+      for (const evt of events) {
+        window.removeEventListener(evt, mountBelowFold)
+      }
+      window.removeEventListener('scroll', onScroll)
+    }
+
+    for (const evt of events) {
+      window.addEventListener(evt, mountBelowFold, { passive: true, once: true })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+
+    return cleanup
+  }, [])
+
+  const cartOpen = useUIStore((s) => s.cartOpen)
   const overlayOpen = useUIStore(
     (s) => s.cartOpen || s.inspectorId !== null || s.preloaderOpen,
   )
@@ -38,6 +100,9 @@ function Home() {
     heroTrackRef,
     scrollProgressRef,
     heroLogoRefs,
+    heroDarkenRef,
+    heroContentRef,
+    heroPosterRef,
     cartTrackRef,
     cartProgressRef,
     cartSpotlightRef,
@@ -47,12 +112,35 @@ function Home() {
 
   const jumpTo = useCallback(
     (id: string) => {
-      const el = document.getElementById(id)
-      if (!el) return
-      if (lenisRef.current) {
-        lenisRef.current.scrollTo(el, { duration: 1.15 })
-      } else {
-        el.scrollIntoView({ behavior: 'smooth' })
+      const scrollToTarget = (el: HTMLElement) => {
+        if (lenisRef.current) {
+          lenisRef.current.scrollTo(el, { duration: 1.15 })
+        } else {
+          el.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+
+      const existing = document.getElementById(id)
+      if (existing) {
+        scrollToTarget(existing)
+        return
+      }
+
+      if (id !== 'hero') {
+        setBelowFoldMounted(true)
+        let frames = 0
+        const waitForTarget = () => {
+          const el = document.getElementById(id)
+          if (el) {
+            scrollToTarget(el)
+            return
+          }
+          frames += 1
+          if (frames < 120) {
+            requestAnimationFrame(waitForTarget)
+          }
+        }
+        requestAnimationFrame(waitForTarget)
       }
     },
     [lenisRef],
@@ -63,31 +151,37 @@ function Home() {
       <Preloader />
       <Navbar onJumpTo={jumpTo} />
 
-      <HeroSection
-        heroTrackRef={heroTrackRef}
-        scrollProgressRef={scrollProgressRef}
-        heroLogoRefs={heroLogoRefs}
-        onJumpTo={jumpTo}
-        onOpenInspector={openInspector}
-      />
+      <main>
+        <HeroSection
+          heroTrackRef={heroTrackRef}
+          scrollProgressRef={scrollProgressRef}
+          heroLogoRefs={heroLogoRefs}
+          heroDarkenRef={heroDarkenRef}
+          heroContentRef={heroContentRef}
+          heroPosterRef={heroPosterRef}
+          onJumpTo={jumpTo}
+        />
 
-      <FoodSelectionCarousel />
+        {belowFoldMounted ? (
+          <BelowFoldMainSections
+            onJumpTo={jumpTo}
+            cartTrackRef={cartTrackRef}
+            cartProgressRef={cartProgressRef}
+            cartSpotlightRef={cartSpotlightRef}
+            cartFloorGlowRef={cartFloorGlowRef}
+          />
+        ) : (
+          <div className="min-h-[150vh]" aria-hidden="true" />
+        )}
+      </main>
 
-      <ServicesSection onJumpTo={jumpTo} />
+      {belowFoldMounted && <BelowFoldFooter onJumpTo={jumpTo} />}
 
-      <CartJourneySection
-        cartTrackRef={cartTrackRef}
-        cartProgressRef={cartProgressRef}
-        cartSpotlightRef={cartSpotlightRef}
-        cartFloorGlowRef={cartFloorGlowRef}
-      />
-
-      {ENABLE_TEAM_SECTION && <TeamSection />}
-      <FaqSection />
-      <LaunchSequenceSection />
-      <NewsletterFooter onJumpTo={jumpTo} />
-
-      <CartDrawer />
+      {cartOpen && (
+        <Suspense fallback={null}>
+          <CartDrawer />
+        </Suspense>
+      )}
     </div>
   )
 }

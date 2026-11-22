@@ -57,7 +57,7 @@ export function useCarouselScroll(
 
     let exactHeadOffsetPx = 220;
     let inRange = false;
-    let bounds = measureElementBounds(runwayRef.current);
+    let bounds = { top: 0, height: 1 };
 
     const maxIdx = SERVICE_STEPS.length - 1;
 
@@ -66,20 +66,24 @@ export function useCarouselScroll(
       const head = headlineRef.current;
       if (!sticky || !head) return;
 
-      const vw = window.innerWidth || 1024;
+      const vw = getStableViewportWidth() || 1024;
       if (vw < 1024) {
         exactHeadOffsetPx = 0;
         return;
       }
 
       const prevTransform = head.style.transform;
-      head.style.transform = "none";
+      if (prevTransform && prevTransform !== "none") {
+        head.style.transform = "none";
+      }
       const stickyRect = sticky.getBoundingClientRect();
       const headRect = head.getBoundingClientRect();
-      head.style.transform = prevTransform;
+      if (prevTransform && prevTransform !== "none") {
+        head.style.transform = prevTransform;
+      }
 
       const handsCenterY = stickyRect.top + stickyRect.height * 0.5;
-      // Align the visual title ("ԺԱՄԱՆԱԿԻ ԼՈՒԾՈՒՄՆԵՐԸ", top ~35% of headline block) right behind the hands
+      // Align the visual title (top ~35% of headline block) right behind the hands
       const titleCenterY = headRect.top + headRect.height * 0.35;
       exactHeadOffsetPx = Math.max(24, handsCenterY - titleCenterY);
     };
@@ -214,6 +218,9 @@ export function useCarouselScroll(
       const isMobile = getStableViewportWidth() < 1024;
 
       if (!initialized) {
+        bounds = measureElementBounds(runwayRef.current);
+        measureHeadOffset();
+        readTargets();
         smoothScrollP = targetScrollP;
         smoothHandsP = targetHandsP;
         smoothStepFloat = targetStepFloat;
@@ -308,8 +315,6 @@ export function useCarouselScroll(
       if (!initialized || inRange) wake();
     });
 
-    measureHeadOffset();
-    wake();
     window.addEventListener("scroll", wake, { passive: true });
     return () => {
       if (rafId) cancelAnimationFrame(rafId);

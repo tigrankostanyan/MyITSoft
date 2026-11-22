@@ -35,10 +35,12 @@ export const RocketModel = memo(function RocketModel({
       />
 
       <img
-        src="/images/rocket-3d.png"
+        src="/images/rocket-3d.webp"
         alt="MyITSoft 3D Rocket"
+        width={400}
+        height={768}
         draggable={false}
-        loading="eager"
+        loading="lazy"
         decoding="async"
         className="mobile-drop-shadow-lite relative z-10 h-full w-full object-contain drop-shadow-[0_28px_48px_rgba(0,0,0,0.85)]"
       />

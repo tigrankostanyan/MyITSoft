@@ -1,12 +1,10 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { Search, Sparkles } from 'lucide-react'
 import { useTranslations } from '~/store/ui-store'
-import { FAQS, FLOATING_TECH_BADGES } from './faq/faqData'
+import { FAQS } from './faq/faqData'
+import { FaqAmbientBackdrop } from './faq/FaqAmbientBackdrop'
 import { FaqRow } from './faq/FaqRow'
-import { TechBadgeSvg } from './faq/TechBadgeSvg'
 import { useFaqChoreography } from './faq/useFaqChoreography'
-
-const RADAR_RING_SIZES = [220, 360, 510, 670, 840, 1020, 1210] as const
 
 export const FaqSection = memo(function FaqSection() {
   const { t } = useTranslations()
@@ -60,65 +58,11 @@ export const FaqSection = memo(function FaqSection() {
           className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden pt-[66px] pb-[88px] min-[576px]:pt-20 min-[576px]:pb-6 lg:pt-22 lg:pb-0"
           style={{ perspective: '1650px', contain: 'layout paint' }}
         >
-          <div
-            className="pointer-events-none absolute inset-0 overflow-hidden"
-            style={{ contain: 'layout paint' }}
-          >
-            <div
-              className="absolute -top-28 left-1/2 h-[540px] w-[min(1120px,100%)] -translate-x-1/2 rounded-full blur-[145px]"
-              style={{
-                background:
-                  'radial-gradient(ellipse closest-side at center, rgba(37, 99, 235, 0.36) 0%, rgba(0, 229, 255, 0.14) 50%, transparent 100%)',
-              }}
-            />
-            <div
-              className="absolute -bottom-36 left-1/2 h-[420px] w-[min(880px,100%)] -translate-x-1/2 rounded-full blur-[130px]"
-              style={{
-                background:
-                  'radial-gradient(ellipse closest-side at center, rgba(37, 99, 235, 0.26) 0%, rgba(56, 189, 248, 0.1) 56%, transparent 100%)',
-              }}
-            />
-
-            <div
-              ref={ringsRef}
-              className="absolute top-1/2 left-1/2 will-change-transform"
-              style={{ transform: 'translate3d(-50%, -50%, 0)' }}
-            >
-              {RADAR_RING_SIZES.map((size, i) => (
-                <div
-                  key={size}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-300/[0.09]"
-                  style={{
-                    width: `${size}px`,
-                    height: `${size}px`,
-                    opacity: Math.max(0.15, 0.85 - i * 0.1),
-                  }}
-                />
-              ))}
-            </div>
-
-            <div
-              ref={orbRef}
-              className="absolute top-1/2 left-1/2 h-28 w-28 rounded-full blur-[20px] will-change-transform"
-              style={{
-                background:
-                  'radial-gradient(circle, rgba(224,242,254,0.9) 0%, rgba(56,189,248,0.55) 42%, transparent 72%)',
-              }}
-            />
-
-            {FLOATING_TECH_BADGES.map((badge, idx) => (
-              <div
-                key={badge.kind}
-                ref={(el) => {
-                  badgeRefs.current[idx] = el
-                }}
-                aria-hidden="true"
-                className={`pointer-events-none absolute z-10 will-change-transform ${badge.posClass}`}
-              >
-                <TechBadgeSvg kind={badge.kind} />
-              </div>
-            ))}
-          </div>
+          <FaqAmbientBackdrop
+            ringsRef={ringsRef}
+            orbRef={orbRef}
+            badgeRefs={badgeRefs}
+          />
 
           <div className="site-container relative z-10 flex flex-1 items-center justify-center">
             <div
@@ -131,7 +75,7 @@ export const FaqSection = memo(function FaqSection() {
                 style={{ transformStyle: 'preserve-3d' }}
               >
                 <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-sky-300/30 bg-sky-400/10 px-4 py-1 font-mono-tech text-[10px] font-bold tracking-[0.18em] text-[#00e5ff] uppercase backdrop-blur-md sm:text-xs">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>MYITSOFT · FAQ</span>
                 </span>
                 <h2 className="font-display text-[clamp(1.5rem,6.4vw,5.6rem)] leading-[0.98] tracking-tight uppercase">
@@ -139,7 +83,7 @@ export const FaqSection = memo(function FaqSection() {
                     {t.faq.hookTitle}
                   </span>
                 </h2>
-                <p className="mt-3 font-heading text-xs font-medium tracking-wide text-sky-100/75 sm:text-base">
+                <p className="mt-3 font-heading text-xs font-medium tracking-wide text-sky-100/80 sm:text-base">
                   {t.faq.hookSubtitle}
                 </p>
               </div>
@@ -167,14 +111,18 @@ export const FaqSection = memo(function FaqSection() {
                     />
                     <span className="h-5 w-0.5 animate-pulse bg-[#00e5ff] sm:h-6" />
                   </div>
-                  <Search className="h-5 w-5 shrink-0 text-sky-200 sm:h-7 sm:w-7" />
+                  <Search className="h-5 w-5 shrink-0 text-sky-200 sm:h-7 sm:w-7" aria-hidden="true" />
                 </div>
               </div>
 
               <div
                 ref={cardStageRef}
                 className="relative z-20 flex w-full flex-col items-center justify-center will-change-transform"
-                style={{ transformStyle: 'preserve-3d' }}
+                style={{
+                  transformStyle: 'preserve-3d',
+                  opacity: 0,
+                  visibility: 'hidden',
+                }}
               >
                 <div ref={titleWrapRef} className="mb-3 text-center will-change-transform sm:mb-9">
                   <h2 className="font-display text-[clamp(1.45rem,5.2vw,3.9rem)] leading-[1.02] tracking-tight text-white uppercase drop-shadow-[0_12px_36px_rgba(56,189,248,0.22)]">
@@ -225,3 +173,4 @@ export const FaqSection = memo(function FaqSection() {
     </section>
   )
 })
+export default FaqSection

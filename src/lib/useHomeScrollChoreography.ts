@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import Lenis from 'lenis'
+import type Lenis from 'lenis'
 import { useUIStore } from '~/store/ui-store'
 import { HERO_FLOATING_LOGO_SPEEDS } from '~/components/home/HeroFloatingTechLogos'
 import {
@@ -17,6 +17,9 @@ interface ScrollChoreographyArgs {
   heroTrackRef: React.RefObject<HTMLDivElement | null>
   scrollProgressRef: React.MutableRefObject<number>
   heroLogoRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
+  heroDarkenRef: React.RefObject<HTMLDivElement | null>
+  heroContentRef: React.RefObject<HTMLDivElement | null>
+  heroPosterRef: React.RefObject<HTMLDivElement | null>
   cartTrackRef: React.RefObject<HTMLDivElement | null>
   cartProgressRef: React.MutableRefObject<number>
   cartSpotlightRef: React.RefObject<HTMLDivElement | null>
@@ -28,6 +31,9 @@ export function useHomeScrollChoreography({
   heroTrackRef,
   scrollProgressRef,
   heroLogoRefs,
+  heroDarkenRef,
+  heroContentRef,
+  heroPosterRef,
   cartTrackRef,
   cartProgressRef,
   cartSpotlightRef,
@@ -35,20 +41,15 @@ export function useHomeScrollChoreography({
   overlayOpen,
 }: ScrollChoreographyArgs) {
   const lenisRef = useRef<Lenis | null>(null)
+  const overlayOpenRef = useRef(overlayOpen)
+  const wasPreloaderOpenRef = useRef(useUIStore.getState().preloaderOpen)
+  overlayOpenRef.current = overlayOpen
 
   useEffect(() => {
-    const lenis = new Lenis({
-      autoRaf: true,
-      lerp: 0.095,
-      smoothWheel: true,
-      syncTouch: true,
-      syncTouchLerp: 0.085,
-      touchInertiaExponent: 1.7,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.0,
-    })
-    lenisRef.current = lenis
-
+    let disposed = false
+    let lenis: Lenis | null = null
+    let unsubLayout: (() => void) | null = null
+    let writeRafId = 0
     let heroTop = 0
     let heroRange = 1
     let cartTop = 0
@@ -58,12 +59,31 @@ export function useHomeScrollChoreography({
 
     const applyHeroLogos = (scroll: number, vh: number) => {
       const heroScroll = Math.max(0, scroll - heroTop)
-      const fade = 1 - smoothstep(vh * 0.04, vh * 0.4, heroScroll)
+      const darken = smoothstep(0, vh * 0.65, heroScroll) * 0.88
+      if (heroDarkenRef.current) {
+        heroDarkenRef.current.style.opacity = darken.toFixed(3)
+      }
+
+      const contentExit = smoothstep(vh * 0.04, vh * 0.45, heroScroll)
+      if (heroContentRef.current) {
+        heroContentRef.current.style.opacity = (1 - contentExit).toFixed(3)
+        heroContentRef.current.style.transform = `translate3d(0, ${(-contentExit * 36).toFixed(2)}px, 0)`
+      }
+
+      if (heroPosterRef.current) {
+        const posterRise = smoothstep(0, vh * 0.35, heroScroll)
+        heroPosterRef.current.style.transform = `translate3d(0, ${(-posterRise * 48).toFixed(2)}px, 0) scale(${(1 + posterRise * 0.06).toFixed(3)})`
+      }
+
+      const fade = 1 - smoothstep(vh * 0.06, vh * 0.48, heroScroll)
+      const liftT = smoothstep(0, vh * 0.55, heroScroll)
       for (let i = 0; i < HERO_FLOATING_LOGO_SPEEDS.length; i++) {
         const el = heroLogoRefs.current[i]
         if (!el) continue
-        const liftY = -heroScroll * HERO_FLOATING_LOGO_SPEEDS[i]
-        el.style.transform = `translate3d(0, ${liftY.toFixed(2)}px, 0)`
+        const speed = HERO_FLOATING_LOGO_SPEEDS[i]
+        const liftY = -heroScroll * speed * 1.25
+        const scale = 1 + liftT * 0.14
+        el.style.transform = `translate3d(0, ${liftY.toFixed(2)}px, 0) scale(${scale.toFixed(3)})`
         el.style.opacity = fade.toFixed(3)
       }
     }
@@ -131,7 +151,9 @@ export function useHomeScrollChoreography({
       }
     }
 
+    let tracksMeasured = false
     const measureTracks = () => {
+      tracksMeasured = true
       const vh = getStableViewportHeight()
       if (heroTrackRef.current) {
         const hb = measureElementBounds(heroTrackRef.current)
@@ -146,29 +168,101 @@ export function useHomeScrollChoreography({
       heroActive = true
       cartActive = true
       syncCachedScrollY()
-      updateCartAndHero(getCachedScrollY())
+      if (!writeRafId) {
+        writeRafId = requestAnimationFrame(() => {
+          writeRafId = 0
+          if (!disposed) {
+            updateCartAndHero(getCachedScrollY())
+          }
+        })
+      }
     }
 
-    measureTracks()
-    const unsubLayout = subscribeLayoutChange(() => {
-      lenis.resize()
+    const ensureMeasured = () => {
+      if (!tracksMeasured) measureTracks()
+    }
+
+    if ((window.scrollY || 0) > 4) {
       measureTracks()
+    }
+
+    unsubLayout = subscribeLayoutChange(() => {
+      lenis?.resize()
+      if (tracksMeasured || (window.scrollY || 0) > 4) {
+        measureTracks()
+      }
     })
 
-    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
-      syncCachedScrollY(scroll)
-      updateCartAndHero(scroll)
-    })
+    const onNativeScroll = () => {
+      ensureMeasured()
+      if (!lenis) {
+        const y = getCachedScrollY()
+        updateCartAndHero(y)
+      }
+    }
+    window.addEventListener('scroll', onNativeScroll, { passive: true })
+
+    let lenisLoading = false
+    const initLenis = () => {
+      if (disposed || lenis || lenisLoading) return
+      lenisLoading = true
+      import('lenis')
+        .then(({ default: LenisCtor }) => {
+          if (disposed) return
+          lenis = new LenisCtor({
+            autoRaf: true,
+            lerp: 0.095,
+            smoothWheel: true,
+            wheelMultiplier: 0.95,
+          })
+          lenisRef.current = lenis
+
+          if (overlayOpenRef.current) {
+            lenis.stop()
+          }
+
+          measureTracks()
+          lenis.on('scroll', ({ scroll }: { scroll: number }) => {
+            syncCachedScrollY(scroll)
+            updateCartAndHero(scroll)
+          })
+        })
+        .catch(() => { })
+    }
+
+    const isFinePointer = window.matchMedia?.('(pointer: fine)').matches
+    const triggerEvents: (keyof WindowEventMap)[] = ['wheel', 'pointerdown', 'keydown']
+    const cleanupLenisTriggers = () => {
+      for (const evt of triggerEvents) {
+        window.removeEventListener(evt, initLenis)
+      }
+    }
+    if (isFinePointer) {
+      if ((window.scrollY || 0) > 4) {
+        initLenis()
+      } else {
+        for (const evt of triggerEvents) {
+          window.addEventListener(evt, initLenis, { passive: true, once: true })
+        }
+      }
+    }
 
     return () => {
-      unsubLayout()
-      lenis.destroy()
+      disposed = true
+      if (writeRafId) cancelAnimationFrame(writeRafId)
+      cleanupLenisTriggers()
+      window.removeEventListener('scroll', onNativeScroll)
+      unsubLayout?.()
+      lenis?.destroy()
       lenisRef.current = null
     }
   }, [
     heroTrackRef,
     scrollProgressRef,
     heroLogoRefs,
+    heroDarkenRef,
+    heroContentRef,
+    heroPosterRef,
     cartTrackRef,
     cartProgressRef,
     cartSpotlightRef,
@@ -177,20 +271,24 @@ export function useHomeScrollChoreography({
 
   useEffect(() => {
     const lenis = lenisRef.current
-    if (!lenis) return
+    const preloaderOpen = useUIStore.getState().preloaderOpen
     if (overlayOpen) {
-      if (useUIStore.getState().preloaderOpen) {
-        window.scrollTo(0, 0)
-        lenis.scrollTo(0, { immediate: true, force: true })
+      if (preloaderOpen) {
+        wasPreloaderOpenRef.current = true
+        if (getCachedScrollY() !== 0) window.scrollTo(0, 0)
+        lenis?.scrollTo(0, { immediate: true, force: true })
         scrollProgressRef.current = 0
       }
-      lenis.stop()
+      lenis?.stop()
     } else {
-      window.scrollTo(0, 0)
-      syncCachedScrollY()
-      lenis.scrollTo(0, { immediate: true, force: true })
-      lenis.resize()
-      lenis.start()
+      if (wasPreloaderOpenRef.current) {
+        wasPreloaderOpenRef.current = false
+        if (getCachedScrollY() !== 0) window.scrollTo(0, 0)
+        syncCachedScrollY(0)
+        lenis?.scrollTo(0, { immediate: true, force: true })
+      }
+      lenis?.resize()
+      lenis?.start()
     }
   }, [overlayOpen, scrollProgressRef])
 

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { lazy, memo, Suspense } from "react";
 import {
   Headphones,
   Keyboard,
@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useTranslations } from "~/store/ui-store";
 import { StudioMonitorShell } from "./StudioMonitorShell";
-import { ShowcaseMini3D } from "~/components/three/ShowcaseMini3D";
+
+const ShowcaseMini3D = lazy(() => import("~/components/three/ShowcaseMini3D"));
 
 const DEMO_PRODUCTS = [
   {
@@ -147,7 +148,11 @@ export const Slide2 = memo(function Slide2({
           </span>
         </div>
         <div className="h-[88px] w-full overflow-hidden rounded-xl bg-gradient-to-b from-[#0f172a] via-[#172036] to-[#0b1020] min-[420px]:h-[110px] sm:h-[142px]">
-          {render3D && <ShowcaseMini3D variant="ecommerce" />}
+          {render3D && (
+            <Suspense fallback={null}>
+              <ShowcaseMini3D variant="ecommerce" />
+            </Suspense>
+          )}
         </div>
       </div>
     </div>

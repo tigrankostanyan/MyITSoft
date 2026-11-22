@@ -1,16 +1,15 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { useMotionValue, useSpring, motion } from 'framer-motion'
-import { Home, Layers, Mail, Users } from 'lucide-react'
-import {
-  getCachedScrollY,
-  getStableViewportHeight,
-  measureElementBounds,
-  subscribeLayoutChange,
-} from '~/lib/scroll-math'
+import { Home, Layers, Mail } from 'lucide-react'
 import { useTranslations } from '~/store/ui-store'
-
-type BottomNavTab = 'home' | 'services' | 'team' | 'contact'
+import { MobileDockSvg } from './mobile-nav/MobileDockSvg'
+import {
+  SIDE_PAD,
+  buildBarPath,
+  buildTopStrokePath,
+  computeNotchMetrics,
+} from './mobile-nav/notchGeometry'
+import { type BottomNavTab, useMobileNavSpy } from './mobile-nav/useMobileNavSpy'
 
 interface MobileBottomNavProps {
   activePage?: 'home' | 'shop'
@@ -19,76 +18,13 @@ interface MobileBottomNavProps {
   onWishlistClick?: () => void
 }
 
-const BAR_HEIGHT = 82
-const TOP_Y = 22
-const VALLEY_DEPTH = 50
-const ORB_SIZE = 46
-const CORNER_R = 14
-const SIDE_PAD = 12
-const EDGE_MIN = 6
-
-function computeNotchGeometry(width: number, cx: number, halfW: number) {
-  const safeW = Math.max(240, width)
-  const span = Math.max(32, Math.min(halfW, cx - EDGE_MIN, safeW - cx - EDGE_MIN))
-  const left = cx - span
-  const right = cx + span
-  const rL = Math.min(CORNER_R, left)
-  const rR = Math.min(CORNER_R, safeW - right)
-  const c1 = span * 0.34
-  const c2 = span * 0.62
-  return { safeW, left, right, rL, rR, c1, c2 }
-}
-
-function buildBarPath(width: number, cx: number, halfW: number) {
-  const { safeW, left, right, rL, rR, c1, c2 } = computeNotchGeometry(width, cx, halfW)
-
-  return [
-    `M 0 ${BAR_HEIGHT}`,
-    `L 0 ${(TOP_Y + rL).toFixed(1)}`,
-    `Q 0 ${TOP_Y} ${rL.toFixed(1)} ${TOP_Y}`,
-    `L ${left.toFixed(1)} ${TOP_Y}`,
-    `C ${(left + c1).toFixed(1)} ${TOP_Y}, ${(cx - c2).toFixed(1)} ${VALLEY_DEPTH}, ${cx.toFixed(1)} ${VALLEY_DEPTH}`,
-    `C ${(cx + c2).toFixed(1)} ${VALLEY_DEPTH}, ${(right - c1).toFixed(1)} ${TOP_Y}, ${right.toFixed(1)} ${TOP_Y}`,
-    `L ${(safeW - rR).toFixed(1)} ${TOP_Y}`,
-    `Q ${safeW.toFixed(1)} ${TOP_Y} ${safeW.toFixed(1)} ${(TOP_Y + rR).toFixed(1)}`,
-    `L ${safeW.toFixed(1)} ${BAR_HEIGHT}`,
-    'Z',
-  ].join(' ')
-}
-
-function buildTopStrokePath(width: number, cx: number, halfW: number) {
-  const { safeW, left, right, rL, rR, c1, c2 } = computeNotchGeometry(width, cx, halfW)
-
-  return [
-    `M 0 ${(TOP_Y + rL).toFixed(1)}`,
-    `Q 0 ${TOP_Y} ${rL.toFixed(1)} ${TOP_Y}`,
-    `L ${left.toFixed(1)} ${TOP_Y}`,
-    `C ${(left + c1).toFixed(1)} ${TOP_Y}, ${(cx - c2).toFixed(1)} ${VALLEY_DEPTH}, ${cx.toFixed(1)} ${VALLEY_DEPTH}`,
-    `C ${(cx + c2).toFixed(1)} ${VALLEY_DEPTH}, ${(right - c1).toFixed(1)} ${TOP_Y}, ${right.toFixed(1)} ${TOP_Y}`,
-    `L ${(safeW - rR).toFixed(1)} ${TOP_Y}`,
-    `Q ${safeW.toFixed(1)} ${TOP_Y} ${safeW.toFixed(1)} ${(TOP_Y + rR).toFixed(1)}`,
-  ].join(' ')
-}
-
-function computeNotchMetrics(idx: number, width: number, itemCount: number) {
-  const safeW = Math.max(240, width)
-  const innerW = Math.max(216, safeW - SIDE_PAD * 2)
-  const slotW = innerW / itemCount
-  const cx = SIDE_PAD + (idx + 0.5) * slotW
-  const maxSymHalfW = Math.min(cx - EDGE_MIN, safeW - cx - EDGE_MIN)
-  const halfW = Math.max(36, Math.min(44, maxSymHalfW))
-  return { safeW, halfW, cx }
-}
-
 const NAV_ITEMS: {
   id: BottomNavTab
-  label: string
   icon: typeof Home
 }[] = [
-  { id: 'home', label: 'Գլխավոր', icon: Home },
-  { id: 'services', label: 'Լուծումներ', icon: Layers },
-  // { id: 'team', label: 'Թիմը', icon: Users },
-  { id: 'contact', label: 'Կապ', icon: Mail },
+  { id: 'home', icon: Home },
+  { id: 'services', icon: Layers },
+  { id: 'contact', icon: Mail },
 ]
 
 export const MobileBottomNav = memo(function MobileBottomNav({
@@ -102,7 +38,6 @@ export const MobileBottomNav = memo(function MobileBottomNav({
   const [selectedTab, setSelectedTab] = useState<BottomNavTab>(
     isContactPage ? 'contact' : 'home',
   )
-  const [barWidth, setBarWidth] = useState(300)
   const navRef = useRef<HTMLDivElement>(null)
   const fillPathRef = useRef<SVGPathElement>(null)
   const clipPathRef = useRef<SVGPathElement>(null)
@@ -110,115 +45,24 @@ export const MobileBottomNav = memo(function MobileBottomNav({
   const orbRef = useRef<HTMLDivElement>(null)
   const manualLockUntilRef = useRef(0)
 
-  // Keep active tab synced with route changes only
-  useEffect(() => {
-    setSelectedTab(isContactPage ? 'contact' : 'home')
-  }, [isContactPage])
-
-  // Zero-reflow cached scroll-spy on the home page
-  useEffect(() => {
-    if (isContactPage) return
-
-    let shopTop = Infinity
-    let teamTop = Infinity
-    let contactTop = Infinity
-    let docHeight = 1
-
-    const measureOffsets = () => {
-      const shopEl = document.getElementById('shop') ?? document.getElementById('services')
-      const teamEl = document.getElementById('team')
-      const contactEl =
-        document.getElementById('footer-audit') ?? document.querySelector('footer')
-
-      shopTop = shopEl ? measureElementBounds(shopEl).top : Infinity
-      teamTop = teamEl ? measureElementBounds(teamEl).top : Infinity
-      contactTop = contactEl ? measureElementBounds(contactEl as HTMLElement).top : Infinity
-      docHeight = document.documentElement.scrollHeight || 1
-    }
-
-    let spyRaf = 0
-    const checkSections = () => {
-      spyRaf = 0
-      if (Date.now() < manualLockUntilRef.current) return
-
-      const scrollY = getCachedScrollY()
-      const vh = getStableViewportHeight()
-      const triggerY = scrollY + vh * 0.42
-
-      if (triggerY >= contactTop || scrollY + vh >= docHeight - 100) {
-        setSelectedTab((prev) => (prev === 'contact' ? prev : 'contact'))
-        return
-      }
-      if (triggerY >= teamTop) {
-        setSelectedTab((prev) => (prev === 'team' ? prev : 'team'))
-        return
-      }
-      if (triggerY >= shopTop) {
-        setSelectedTab((prev) => (prev === 'services' ? prev : 'services'))
-        return
-      }
-      setSelectedTab((prev) => (prev === 'home' ? prev : 'home'))
-    }
-
-    const onScroll = () => {
-      if (!spyRaf) {
-        spyRaf = requestAnimationFrame(checkSections)
-      }
-    }
-
-    measureOffsets()
-    checkSections()
-    const settleTimer = window.setTimeout(() => {
-      measureOffsets()
-      checkSections()
-    }, 300)
-    const unsubLayout = subscribeLayoutChange(() => {
-      measureOffsets()
-      checkSections()
-    })
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      window.clearTimeout(settleTimer)
-      unsubLayout()
-      if (spyRaf) cancelAnimationFrame(spyRaf)
-      window.removeEventListener('scroll', onScroll)
-    }
-  }, [isContactPage])
-
-  useEffect(() => {
-    const el = navRef.current
-    if (!el) return
-    const update = () => {
-      const next = el.getBoundingClientRect().width || el.clientWidth
-      if (next > 0) setBarWidth(next)
-    }
-    update()
-    if (typeof ResizeObserver !== 'undefined') {
-      const ro = new ResizeObserver(update)
-      ro.observe(el)
-      return () => ro.disconnect()
-    }
-    window.addEventListener('resize', update, { passive: true })
-    return () => window.removeEventListener('resize', update)
-  }, [])
-
   const activeTab: BottomNavTab = isContactPage ? 'contact' : selectedTab
   const activeIndex = Math.max(
     0,
     NAV_ITEMS.findIndex((item) => item.id === activeTab),
   )
 
-  const indexMotion = useMotionValue(activeIndex)
-  const smoothIndex = useSpring(indexMotion, {
-    stiffness: 360,
-    damping: 30,
-    mass: 0.75,
+  const barWidth = useMobileNavSpy({
+    isContactPage,
+    itemCount: NAV_ITEMS.length,
+    activeIndex,
+    navRef,
+    fillPathRef,
+    clipPathRef,
+    strokePathRef,
+    orbRef,
+    manualLockUntilRef,
+    setSelectedTab,
   })
-
-  useEffect(() => {
-    indexMotion.set(activeIndex)
-  }, [activeIndex, indexMotion])
 
   const initialMetrics = useRef<{
     fill: string
@@ -234,32 +78,9 @@ export const MobileBottomNav = memo(function MobileBottomNav({
     initialMetrics.current = {
       fill: buildBarPath(safeW, cx, halfW),
       stroke: buildTopStrokePath(safeW, cx, halfW),
-      orbTransform: `translate3d(${(cx - ORB_SIZE / 2).toFixed(2)}px, 0, 0)`,
+      orbTransform: `translate3d(${(cx - 23).toFixed(2)}px, 0, 0)`,
     }
   }
-
-  useEffect(() => {
-    const applyGeometry = (idx: number, width: number) => {
-      const { safeW, halfW, cx } = computeNotchMetrics(
-        idx,
-        width,
-        NAV_ITEMS.length,
-      )
-      const barPath = buildBarPath(safeW, cx, halfW)
-      fillPathRef.current?.setAttribute('d', barPath)
-      clipPathRef.current?.setAttribute('d', barPath)
-      strokePathRef.current?.setAttribute(
-        'd',
-        buildTopStrokePath(safeW, cx, halfW),
-      )
-      if (orbRef.current) {
-        orbRef.current.style.transform = `translate3d(${(cx - ORB_SIZE / 2).toFixed(2)}px, 0, 0)`
-      }
-    }
-
-    applyGeometry(smoothIndex.get(), barWidth)
-    return smoothIndex.on('change', (idx) => applyGeometry(idx, barWidth))
-  }, [barWidth, smoothIndex])
 
   const scrollToSection = useCallback(
     (sectionId: string) => {
@@ -296,9 +117,7 @@ export const MobileBottomNav = memo(function MobileBottomNav({
       void navigate({ to: '/' }).then(() => {
         if (targetSection !== 'hero') {
           window.setTimeout(() => {
-            document
-              .getElementById(targetSection)
-              ?.scrollIntoView({ behavior: 'smooth' })
+            document.getElementById(targetSection)?.scrollIntoView({ behavior: 'smooth' })
           }, 260)
         }
       })
@@ -318,10 +137,7 @@ export const MobileBottomNav = memo(function MobileBottomNav({
           'linear-gradient(to top, rgba(7, 13, 30, 0.68) env(safe-area-inset-bottom, 0px), transparent env(safe-area-inset-bottom, 0px))',
       }}
     >
-      <div
-        ref={navRef}
-        className="relative h-[82px] w-full bg-transparent"
-      >
+      <div ref={navRef} className="relative h-[82px] w-full bg-transparent">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 backdrop-blur-sm"
@@ -333,42 +149,15 @@ export const MobileBottomNav = memo(function MobileBottomNav({
           }}
         />
 
-        <svg
-          height={BAR_HEIGHT}
-          viewBox={`0 0 ${barWidth} ${BAR_HEIGHT}`}
-          preserveAspectRatio="none"
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full"
-        >
-          <defs>
-            <clipPath id="mobileDockClip" clipPathUnits="userSpaceOnUse">
-              <path ref={clipPathRef} d={initialMetrics.current.fill} />
-            </clipPath>
-            <linearGradient id="mobileDockFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0f1f44" stopOpacity="0.16" />
-              <stop offset="100%" stopColor="#070d1e" stopOpacity="0.22" />
-            </linearGradient>
-            <linearGradient id="mobileDockStroke" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(56,189,248,0.22)" />
-              <stop offset="50%" stopColor="rgba(56,189,248,0.8)" />
-              <stop offset="100%" stopColor="rgba(0,229,255,0.48)" />
-            </linearGradient>
-          </defs>
-          <path
-            ref={fillPathRef}
-            d={initialMetrics.current.fill}
-            fill="url(#mobileDockFill)"
-          />
-          <path
-            ref={strokePathRef}
-            d={initialMetrics.current.stroke}
-            fill="none"
-            stroke="url(#mobileDockStroke)"
-            strokeWidth="1.35"
-          />
-        </svg>
+        <MobileDockSvg
+          barWidth={barWidth}
+          initialFill={initialMetrics.current.fill}
+          initialStroke={initialMetrics.current.stroke}
+          fillPathRef={fillPathRef}
+          clipPathRef={clipPathRef}
+          strokePathRef={strokePathRef}
+        />
 
-        {/* Floating circular active medallion */}
         <div
           ref={orbRef}
           aria-hidden="true"
@@ -391,39 +180,32 @@ export const MobileBottomNav = memo(function MobileBottomNav({
               <button
                 key={item.id}
                 type="button"
-                aria-label={itemLabel}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => handleSelect(item.id)}
                 className="relative flex flex-col items-center justify-end pb-2.5 focus:outline-none cursor-pointer"
               >
-                <motion.span
-                  animate={{
-                    y: isActive ? -19 : 0,
-                    scale: isActive ? 1.08 : 1,
-                  }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-                  className={`mb-1 flex h-8 w-8 items-center justify-center transition-colors duration-200 ${
-                    isActive ? 'text-[#1d4ed8]' : 'text-sky-100/55'
+                <span
+                  className={`mb-1 flex h-8 w-8 items-center justify-center transition-[transform,color] duration-300 ease-[cubic-bezier(0.34,1.45,0.64,1)] ${
+                    isActive
+                      ? '-translate-y-[19px] scale-[1.08] text-[#1d4ed8]'
+                      : 'translate-y-0 scale-100 text-sky-100/70'
                   }`}
                 >
                   <Icon
                     className="h-[20px] w-[20px]"
                     strokeWidth={isActive ? 2.25 : 1.75}
+                    aria-hidden="true"
                   />
-                </motion.span>
-                <motion.span
-                  animate={{
-                    opacity: isActive ? 1 : 0.62,
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className={`text-[10.5px] leading-[14px] tracking-tight whitespace-nowrap ${
+                </span>
+                <span
+                  className={`text-[10.5px] leading-[14px] tracking-tight whitespace-nowrap transition-opacity duration-200 ${
                     isActive
-                      ? 'font-bold text-white'
-                      : 'font-medium text-sky-100/55'
+                      ? 'font-bold text-white opacity-100'
+                      : 'font-medium text-sky-100/75 opacity-80'
                   }`}
                 >
                   {itemLabel}
-                </motion.span>
+                </span>
               </button>
             )
           })}

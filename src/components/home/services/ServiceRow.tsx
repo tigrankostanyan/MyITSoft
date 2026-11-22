@@ -76,7 +76,7 @@ export const ServiceRow = memo(function ServiceRow({
         <div className="hidden lg:col-span-1 lg:block lg:pl-3">
           <span
             className="font-mono-tech text-xs font-bold tracking-[0.14em] transition-colors duration-300"
-            style={{ color: isActive ? service.accent : 'rgba(255,255,255,0.25)' }}
+            style={{ color: isActive ? service.accent : 'rgba(255,255,255,0.58)' }}
           >
             {service.index}
           </span>
@@ -107,7 +107,7 @@ export const ServiceRow = memo(function ServiceRow({
               <div className="flex items-center gap-2 lg:block">
                 <span
                   className="font-mono-tech text-[10px] font-bold tracking-[0.12em] lg:hidden"
-                  style={{ color: isActive ? service.accent : 'rgba(255,255,255,0.35)' }}
+                  style={{ color: isActive ? service.accent : 'rgba(255,255,255,0.58)' }}
                 >
                   {service.index}
                 </span>
@@ -146,7 +146,7 @@ export const ServiceRow = memo(function ServiceRow({
             <span
               key={cap}
               className={`text-[10px] font-medium leading-tight transition-colors duration-300 min-[380px]:text-[11px] sm:text-[12px] sm:leading-snug xl:text-[12.5px] ${
-                isActive ? 'text-white/95' : 'text-white/42 group-hover:text-white/80'
+                isActive ? 'text-white/95' : 'text-white/60 group-hover:text-white/85'
               }`}
             >
               {cap}

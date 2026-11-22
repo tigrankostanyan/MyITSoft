@@ -1,5 +1,4 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 import { useCartStore } from '~/store/cart-store'
 import { useTranslations, useUIStore } from '~/store/ui-store'
@@ -34,15 +33,16 @@ const AuditSubscribeForm = memo(function AuditSubscribeForm({
         required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        aria-label={t.launch.readyCta.placeholder}
         placeholder={t.launch.readyCta.placeholder}
-        className="min-w-0 flex-1 bg-transparent px-3.5 py-2 font-mono-tech text-[11px] text-white placeholder:text-white/50 focus:outline-none sm:px-4 sm:text-xs"
+        className="min-w-0 flex-1 bg-transparent px-3.5 py-2 font-mono-tech text-[11px] text-white placeholder:text-white/55 focus:outline-none sm:px-4 sm:text-xs"
       />
       <button
         type="submit"
         aria-label={t.launch.readyCta.submitLabel}
         className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-[#0f172a] shadow-[0_0_20px_rgba(255,255,255,0.35)] transition hover:scale-105 hover:bg-[#00e5ff] sm:h-11 sm:w-11"
       >
-        <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+        <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
       </button>
     </form>
   )
@@ -130,18 +130,10 @@ export const ReadyToMoveCta = memo(function ReadyToMoveCta() {
                 : 'inset 0 2px 10px rgba(0, 0, 0, 0.75)',
             }}
           >
-            <motion.span
-              layout
-              transition={{
-                type: 'spring',
-                stiffness: 420,
-                damping: 22,
-                mass: 0.9,
-              }}
-              className="block h-[0.58em] w-[0.58em] rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.45)]"
+            <span
+              className="block h-[0.58em] w-[0.58em] rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform"
               style={{
-                marginLeft: boosted ? 'auto' : '0',
-                marginRight: boosted ? '0' : 'auto',
+                transform: boosted ? 'translate3d(0.9em, 0, 0)' : 'translate3d(0, 0, 0)',
               }}
             />
           </button>
@@ -158,7 +150,7 @@ export const ReadyToMoveCta = memo(function ReadyToMoveCta() {
         {subscribed ? (
           <div className="mx-auto mt-7 flex w-full max-w-md flex-col items-center gap-3 rounded-2xl border border-emerald-400/40 bg-black/50 p-4 backdrop-blur-xl sm:mt-9 sm:p-5">
             <div className="flex items-center gap-2 font-heading text-xs font-bold text-emerald-300 uppercase sm:text-sm">
-              <Check className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+              <Check className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" aria-hidden="true" />
               <span>{t.launch.readyCta.successTitle}</span>
             </div>
             <button
@@ -172,7 +164,7 @@ export const ReadyToMoveCta = memo(function ReadyToMoveCta() {
         ) : (
           <>
             <AuditSubscribeForm onSubscribed={handleSubscribed} />
-            <p className="mt-3 text-[11px] text-white/45 sm:text-xs">
+            <p className="mt-3 text-[11px] text-white/60 sm:text-xs">
               {t.launch.readyCta.responseHint}
             </p>
           </>

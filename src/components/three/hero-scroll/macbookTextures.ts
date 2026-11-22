@@ -3,23 +3,26 @@ import * as THREE from 'three'
 import { drawMacBookScreen } from './drawMacBookScreen'
 
 /** Screen texture mapped onto the MacBook GLB display. */
-export function useMacBookCleanScreenTexture() {
+export function useMacBookCleanScreenTexture(isMobile = false) {
   const texture = useMemo(() => {
     if (typeof document === 'undefined') return null
+    const width = isMobile ? 512 : 1024
+    const height = isMobile ? 320 : 640
     const canvas = document.createElement('canvas')
-    canvas.width = 1600
-    canvas.height = 1000
+    canvas.width = width
+    canvas.height = height
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
+    ctx.scale(width / 1600, height / 1000)
     drawMacBookScreen(ctx)
 
     const tex = new THREE.CanvasTexture(canvas)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.flipY = true
-    tex.anisotropy = 8
+    tex.anisotropy = isMobile ? 1 : 4
     tex.needsUpdate = true
     return tex
-  }, [])
+  }, [isMobile])
 
   useEffect(() => () => texture?.dispose(), [texture])
   return texture

@@ -41,14 +41,21 @@ export const RocketCanvas = memo(function RocketCanvas({
 
     let disposed = false
     let assets: VfxAssets | null = null
+    let assetsRequested = false
 
-    loadVfxAssets()
-      .then((loaded) => {
-        if (!disposed) {
-          assets = loaded
-        }
-      })
-      .catch(() => {})
+    const ensureVfxAssets = () => {
+      if (assetsRequested || disposed) return
+      assetsRequested = true
+      loadVfxAssets()
+        .then((loaded) => {
+          if (!disposed) {
+            assets = loaded
+          }
+        })
+        .catch(() => {
+          assetsRequested = false
+        })
+    }
 
     const smokes: SmokePuff[] = []
     const flames: FlameParticle[] = []
@@ -57,7 +64,8 @@ export const RocketCanvas = memo(function RocketCanvas({
     let width = 1
     let height = 1
     let dpr = 1
-    let isVisible = true
+    let measuredOnce = false
+    let isVisible = false
     let rafId = 0
     let lastTime = performance.now()
     let smokeAccum = 0
@@ -69,6 +77,7 @@ export const RocketCanvas = memo(function RocketCanvas({
     let rocketW = 300
 
     const measure = () => {
+      measuredOnce = true
       const rect = frontCanvas.getBoundingClientRect()
       const isMobileCanvas = (window.innerWidth || 1024) < 768
       dpr = Math.min(window.devicePixelRatio || 1, isMobileCanvas ? 1.25 : 2)
@@ -89,9 +98,10 @@ export const RocketCanvas = memo(function RocketCanvas({
       const rk = rocketWrapRef.current
       if (rk) {
         const prevTransform = rk.style.transform
-        rk.style.transform = 'none'
+        const hadTransform = Boolean(prevTransform && prevTransform !== 'none')
+        if (hadTransform) rk.style.transform = 'none'
         const rkRect = rk.getBoundingClientRect()
-        rk.style.transform = prevTransform
+        if (hadTransform) rk.style.transform = prevTransform
         restNozzleX = rkRect.left - rect.left + rkRect.width * 0.5
         restNozzleY = rkRect.top - rect.top + rkRect.height * 0.905
         rocketW = rkRect.width
@@ -101,12 +111,14 @@ export const RocketCanvas = memo(function RocketCanvas({
       }
     }
 
-    measure()
-    const delayedMeasureRaf = requestAnimationFrame(measure)
-    const unsubLayout = subscribeLayoutChange(measure)
+    const unsubLayout = subscribeLayoutChange(() => {
+      if (isVisible || measuredOnce) measure()
+    })
 
     const startLoop = () => {
       if (!disposed && isVisible && !rafId) {
+        if (!measuredOnce) measure()
+        ensureVfxAssets()
         lastTime = performance.now()
         rafId = requestAnimationFrame(loop)
       }
@@ -115,12 +127,12 @@ export const RocketCanvas = memo(function RocketCanvas({
 
     const io = new IntersectionObserver(
       (entries) => {
-        isVisible = entries[0]?.isIntersecting ?? true
+        isVisible = entries[0]?.isIntersecting ?? false
         if (isVisible) {
           startLoop()
         }
       },
-      { rootMargin: '160px' },
+      { rootMargin: '500px' },
     )
     io.observe(frontCanvas)
 
@@ -285,12 +297,9 @@ export const RocketCanvas = memo(function RocketCanvas({
       rafId = requestAnimationFrame(loop)
     }
 
-    startLoop()
-
     return () => {
       disposed = true
       wakeVfxRef.current = null
-      cancelAnimationFrame(delayedMeasureRaf)
       if (rafId) cancelAnimationFrame(rafId)
       unsubLayout()
       io.disconnect()

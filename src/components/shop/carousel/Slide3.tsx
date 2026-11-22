@@ -1,8 +1,9 @@
-import { memo } from "react";
+import { lazy, memo, Suspense } from "react";
 import { Palette } from "lucide-react";
 import { useTranslations } from "~/store/ui-store";
 import { StudioMonitorShell } from "./StudioMonitorShell";
-import { ShowcaseMini3D } from "~/components/three/ShowcaseMini3D";
+
+const ShowcaseMini3D = lazy(() => import("~/components/three/ShowcaseMini3D"));
 
 const DESIGN_TOKENS = ['#0f172a', '#38bdf8', '#818cf8', '#c084fc'] as const
 const DESIGN_LAYERS = ['Hero Glass Frame', 'Navigation Bar', 'Pricing Grid'] as const
@@ -121,7 +122,11 @@ export const Slide3 = memo(function Slide3({
           </span>
         </div>
         <div className="h-[138px] w-full overflow-hidden rounded-xl bg-gradient-to-b from-[#0b1020] via-[#131a30] to-[#080c18]">
-          {render3D && <ShowcaseMini3D variant="design" />}
+          {render3D && (
+            <Suspense fallback={null}>
+              <ShowcaseMini3D variant="design" />
+            </Suspense>
+          )}
         </div>
       </div>
 

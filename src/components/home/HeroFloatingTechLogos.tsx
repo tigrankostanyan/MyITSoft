@@ -32,7 +32,6 @@ export const HeroFloatingTechLogos = memo(function HeroFloatingTechLogos({
             ref={(el) => {
               logoScrollRefs.current[idx] = el
             }}
-            className="will-change-transform"
           >
             <div
               className="hero-logo-float"
@@ -42,7 +41,7 @@ export const HeroFloatingTechLogos = memo(function HeroFloatingTechLogos({
               }}
             >
               <div
-                className={`hero-logo-tile relative flex items-center justify-center rounded-[12px] min-[380px]:rounded-[14px] md:rounded-[20px] xl:rounded-[22px] backdrop-blur-xl ${item.size}`}
+                className={`hero-logo-tile relative flex items-center justify-center rounded-[12px] min-[380px]:rounded-[14px] md:rounded-[20px] xl:rounded-[22px] ${item.size}`}
                 style={{
                   background: item.tileBg,
                   transform: item.tilt,

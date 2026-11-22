@@ -32,10 +32,11 @@ export const ServicesSection = memo(function ServicesSection({
   const [scrollActiveIdx, setScrollActiveIdx] = useState<number | null>(null)
 
   useEffect(() => {
-    const check = () => setIsDesktop(window.innerWidth >= 1024)
-    check()
-    window.addEventListener('resize', check, { passive: true })
-    return () => window.removeEventListener('resize', check)
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const sync = () => setIsDesktop(mql.matches)
+    sync()
+    mql.addEventListener('change', sync)
+    return () => mql.removeEventListener('change', sync)
   }, [])
 
   const choreographyRefs = useMemo(
@@ -170,3 +171,4 @@ export const ServicesSection = memo(function ServicesSection({
     </section>
   )
 })
+export default ServicesSection

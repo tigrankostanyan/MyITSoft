@@ -15,7 +15,11 @@ export function SlideFrame({
         slideRefs.current[idx] = el
       }}
       className="absolute inset-0 flex items-center justify-center will-change-transform"
-      style={{ transformStyle: 'preserve-3d' }}
+      style={{
+        transformStyle: 'preserve-3d',
+        opacity: idx === 0 ? 1 : 0,
+        visibility: idx === 0 ? 'visible' : 'hidden',
+      }}
     >
       {children}
     </div>

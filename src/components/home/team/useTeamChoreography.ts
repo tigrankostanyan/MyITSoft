@@ -69,7 +69,7 @@ export function useTeamChoreography(
     let smoothLeaveP = 0
     let lastArmW = 0
     let inRange = false
-    let bounds = measureElementBounds(refs.runwayRef.current)
+    let bounds = { top: 0, height: 1 }
 
     const getLeaveProgress = (scrollY: number, vh: number): number => {
       const rectBottom = bounds.top + bounds.height - scrollY
@@ -253,6 +253,9 @@ export function useTeamChoreography(
       const isMobileViewport = getStableViewportWidth() < 1024
 
       if (!initialized) {
+        bounds = measureElementBounds(refs.runwayRef.current)
+        targetP = computeRunwayProgress(bounds, scrollY, vh)
+        targetLeaveP = getLeaveProgress(scrollY, vh)
         smoothP = targetP
         smoothLeaveP = targetLeaveP
         refs.smoothSlideRef.current = refs.targetSlideRef.current
@@ -357,7 +360,6 @@ export function useTeamChoreography(
     })
 
     wakeRef.current = wake
-    wake()
     window.addEventListener('scroll', wake, { passive: true })
     return () => {
       wakeRef.current = null

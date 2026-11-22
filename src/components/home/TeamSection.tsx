@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { signedOffset } from '~/lib/scroll-math'
+import { getStableViewportWidth, signedOffset } from '~/lib/scroll-math'
 import { TEAM_MEMBERS } from './team/teamData'
 import { TeamIntroStage } from './team/TeamIntroStage'
 import { TeamMemberCard } from './team/TeamMemberCard'
@@ -95,7 +95,7 @@ export const TeamSection = memo(function TeamSection() {
   )
 
   useEffect(() => {
-    const update = () => setViewportWidth(window.innerWidth || 1440)
+    const update = () => setViewportWidth(getStableViewportWidth() || 1440)
     update()
     window.addEventListener('resize', update, { passive: true })
     return () => window.removeEventListener('resize', update)
