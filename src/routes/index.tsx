@@ -1,5 +1,6 @@
 import { lazy, startTransition, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import { getCachedScrollY } from '~/lib/scroll-math'
 import { useUIStore } from '~/store/ui-store'
 import { useHomeScrollChoreography } from '~/lib/useHomeScrollChoreography'
 import { Preloader } from '~/components/shop/Preloader'
@@ -26,8 +27,8 @@ export const Route = createFileRoute('/')({
         rel: 'preload',
         as: 'image',
         imageSrcSet:
-          '/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop.webp 777w',
-        imageSizes: 'min(54vw, 86.3vh)',
+          '/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop-800.webp 800w, /images/hero-stage-desktop.webp 973w',
+        imageSizes: 'min(57.9vw, 90.1vh)',
         media: '(min-width: 768px)',
         fetchPriority: 'high',
       },
@@ -52,7 +53,7 @@ function Home() {
   const [belowFoldMounted, setBelowFoldMounted] = useState(false)
 
   useEffect(() => {
-    if (window.scrollY > 4 || Boolean(window.location.hash)) {
+    if (getCachedScrollY() > 4 || Boolean(window.location.hash)) {
       startTransition(() => setBelowFoldMounted(true))
       return
     }
@@ -66,7 +67,7 @@ function Home() {
     }
 
     const onScroll = () => {
-      if (window.scrollY > 4) mountBelowFold()
+      if (getCachedScrollY() > 4) mountBelowFold()
     }
 
     const events: (keyof WindowEventMap)[] = [

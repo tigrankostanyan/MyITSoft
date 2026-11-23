@@ -33,7 +33,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(28, 32, 52, 0.92) 0%, rgba(14, 17, 32, 0.96) 100%)',
     borderTint: 'rgba(255, 255, 255, 0.22)',
     renderIcon: () => (
-      <svg viewBox="0 0 38 57" className="h-[58%] w-auto drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 38 57" className="h-[58%] w-auto md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <path d="M9.5 0H19v19H9.5a9.5 9.5 0 0 1 0-19Z" fill="#F24E1E" />
         <path d="M19 0h9.5a9.5 9.5 0 0 1 0 19H19V0Z" fill="#FF7262" />
         <path d="M9.5 19H19v19H9.5a9.5 9.5 0 0 1 0-19Z" fill="#A259FF" />
@@ -58,7 +58,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(18, 32, 52, 0.92) 0%, rgba(10, 17, 30, 0.96) 100%)',
     borderTint: 'rgba(97, 218, 251, 0.34)',
     renderIcon: () => (
-      <svg viewBox="-11.5 -10.232 23 20.464" className="h-[64%] w-[64%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="-11.5 -10.232 23 20.464" className="h-[64%] w-[64%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <circle cx="0" cy="0" r="2.05" fill="#61DAFB" />
         <g stroke="#61DAFB" strokeWidth="1.05" fill="none">
           <ellipse rx="11" ry="4.2" />
@@ -84,7 +84,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, #3A0A00 0%, #240400 100%)',
     borderTint: 'rgba(255, 154, 0, 0.72)',
     renderIcon: () => (
-      <svg viewBox="0 0 64 64" className="h-[78%] w-[78%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 64 64" className="h-[78%] w-[78%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <text
           x="32"
           y="43.5"
@@ -116,7 +116,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, #002340 0%, #001528 100%)',
     borderTint: 'rgba(49, 168, 255, 0.72)',
     renderIcon: () => (
-      <svg viewBox="0 0 64 64" className="h-[78%] w-[78%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 64 64" className="h-[78%] w-[78%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <text
           x="32"
           y="43.5"
@@ -148,7 +148,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(16, 30, 56, 0.92) 0%, rgba(10, 17, 34, 0.96) 100%)',
     borderTint: 'rgba(36, 160, 237, 0.38)',
     renderIcon: () => (
-      <svg viewBox="0 0 100 100" className="h-[62%] w-[62%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 100 100" className="h-[62%] w-[62%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <path
           d="M17.5 25.5 74 68.5V90c-.6 0-1.2-.2-1.7-.5L11.2 35.8a3 3 0 0 1 0-4.5l4.3-4.1a3 3 0 0 1 2-.7Z"
           fill="#0065A9"
@@ -180,7 +180,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(18, 36, 26, 0.92) 0%, rgba(10, 20, 16, 0.96) 100%)',
     borderTint: 'rgba(131, 205, 41, 0.36)',
     renderIcon: () => (
-      <svg viewBox="0 0 64 64" className="h-[68%] w-[68%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 64 64" className="h-[68%] w-[68%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <defs>
           <linearGradient id="node-hex-grad" x1="12" y1="6" x2="52" y2="58" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#83CD29" />
@@ -228,7 +228,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(16, 30, 58, 0.94) 0%, rgba(9, 16, 34, 0.97) 100%)',
     borderTint: 'rgba(101, 154, 210, 0.42)',
     renderIcon: () => (
-      <svg viewBox="0 0 64 64" className="h-[68%] w-[68%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 64 64" className="h-[68%] w-[68%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <defs>
           <clipPath id="cpp-hex-clip">
             <path d="M29.6 5.4a4.8 4.8 0 0 1 4.8 0l20.2 11.7a4.8 4.8 0 0 1 2.4 4.15v23.5a4.8 4.8 0 0 1-2.4 4.15L34.4 60.6a4.8 4.8 0 0 1-4.8 0L9.4 48.9A4.8 4.8 0 0 1 7 44.75v-23.5a4.8 4.8 0 0 1 2.4-4.15L29.6 5.4Z" />
@@ -270,7 +270,7 @@ export const FLOATING_LOGOS: TechLogoItem[] = [
     tileBg: 'linear-gradient(145deg, rgba(16, 32, 60, 0.92) 0%, rgba(10, 18, 36, 0.96) 100%)',
     borderTint: 'rgba(96, 165, 250, 0.38)',
     renderIcon: () => (
-      <svg viewBox="0 0 64 64" className="h-[66%] w-[66%] drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
+      <svg viewBox="0 0 64 64" className="h-[66%] w-[66%] md:drop-shadow-[0_3px_6px_rgba(0,0,0,0.45)]" fill="none">
         <defs>
           <linearGradient id="cloud-3d" x1="10" y1="16" x2="54" y2="50" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#93E5FF" />

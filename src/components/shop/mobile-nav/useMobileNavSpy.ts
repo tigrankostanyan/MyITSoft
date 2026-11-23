@@ -49,10 +49,11 @@ export function useMobileNavSpy({
   const springPosRef = useRef(activeIndex)
   const springVelRef = useRef(0)
   const targetIdxRef = useRef(activeIndex)
+  const lastAppliedRef = useRef({ w: 300, idx: isContactPage ? 2 : 0 })
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 575px)')
-    const sync = () => setIsMobileViewport(mql.matches)
+    const sync = () => startTransition(() => setIsMobileViewport(mql.matches))
     sync()
     mql.addEventListener('change', sync)
     return () => mql.removeEventListener('change', sync)
@@ -108,7 +109,7 @@ export function useMobileNavSpy({
       }
     }
 
-    if ((window.scrollY || 0) > 4) {
+    if (getCachedScrollY() > 4) {
       checkSections()
     }
 
@@ -159,6 +160,7 @@ export function useMobileNavSpy({
     let lastTime = performance.now()
 
     const applyGeometry = (idx: number) => {
+      lastAppliedRef.current = { w: barWidth, idx }
       const { safeW, halfW, cx } = computeNotchMetrics(idx, barWidth, itemCount)
       const barPath = buildBarPath(safeW, cx, halfW)
       fillPathRef.current?.setAttribute('d', barPath)
@@ -191,7 +193,12 @@ export function useMobileNavSpy({
       rafId = requestAnimationFrame(step)
     }
 
-    applyGeometry(springPosRef.current)
+    if (
+      lastAppliedRef.current.w !== barWidth ||
+      lastAppliedRef.current.idx !== springPosRef.current
+    ) {
+      applyGeometry(springPosRef.current)
+    }
     if (Math.abs(springPosRef.current - activeIndex) >= 0.0005 || Math.abs(springVelRef.current) >= 0.0005) {
       rafId = requestAnimationFrame(step)
     }

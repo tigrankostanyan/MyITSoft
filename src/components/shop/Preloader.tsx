@@ -62,10 +62,10 @@ export function Preloader() {
           {t.preloader.subtitle}
         </div>
 
-        <div className="font-display -my-[0.12em] flex items-baseline justify-center text-[clamp(2.35rem,13.5vw,11.8rem)] leading-[1.2] tracking-[-0.025em]">
+        <div className="font-display -my-[0.12em] flex items-baseline justify-center text-[clamp(2.35rem,13.5vw,11.8rem)] leading-[1.2] tracking-[-0.025em] md:drop-shadow-[0_0_24px_rgba(0,229,255,0.28)]">
           <span className="sr-only">MyITSoft</span>
           {BRAND_LETTERS.map((ch, idx) => {
-            const delayMs = 350 + idx * 340
+            const delayMs = 20 + idx * 42
             return (
               <span
                 key={`${ch}-${idx}`}
@@ -84,14 +84,13 @@ export function Preloader() {
                 </span>
 
                 <span
-                  className="preloader-letter-fill mobile-drop-shadow-lite absolute inset-0 block select-none"
+                  className="preloader-letter-fill absolute inset-0 block select-none"
                   style={{
                     animationDelay: `${delayMs}ms`,
                     background:
                       'linear-gradient(180deg, #ffffff 0%, #e0f2fe 56%, #38bdf8 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 0 26px rgba(0, 229, 255, 0.28))',
                   }}
                 >
                   {ch}

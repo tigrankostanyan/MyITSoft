@@ -56,12 +56,13 @@ export function useHomeScrollChoreography({
     let heroActive = true
     let cartActive = true
 
-    const applyHeroLogos = (scroll: number, vh: number) => {
+    const applyHeroLogos = (scroll: number, vh: number, heroProgress: number) => {
       applyHeroScrollWrites(
         { heroDarkenRef, heroContentRef, heroPosterRef, heroLogoRefs },
         scroll,
         heroTop,
         vh,
+        heroProgress,
       )
     }
 
@@ -79,12 +80,13 @@ export function useHomeScrollChoreography({
       const heroLimit = heroTop + heroRange + vh * 0.6
       if (scroll <= heroLimit) {
         heroActive = true
-        scrollProgressRef.current = clamp01((scroll - heroTop) / heroRange)
-        applyHeroLogos(scroll, vh)
+        const p = clamp01((scroll - heroTop) / heroRange)
+        scrollProgressRef.current = p
+        applyHeroLogos(scroll, vh, p)
       } else if (heroActive) {
         heroActive = false
         scrollProgressRef.current = 1
-        applyHeroLogos(heroLimit, vh)
+        applyHeroLogos(heroLimit, vh, 1)
       }
 
       const cartMin = cartTop - vh
@@ -129,13 +131,13 @@ export function useHomeScrollChoreography({
       if (!tracksMeasured) measureTracks()
     }
 
-    if ((window.scrollY || 0) > 4) {
+    if (getCachedScrollY() > 4) {
       measureTracks()
     }
 
     unsubLayout = subscribeLayoutChange(() => {
       lenis?.resize()
-      if (tracksMeasured || (window.scrollY || 0) > 4) {
+      if (tracksMeasured || getCachedScrollY() > 4) {
         measureTracks()
       }
     })
@@ -143,8 +145,8 @@ export function useHomeScrollChoreography({
     const onNativeScroll = () => {
       ensureMeasured()
       if (!lenis) {
-        const y = getCachedScrollY()
-        updateCartAndHero(y)
+        syncCachedScrollY()
+        updateCartAndHero(getCachedScrollY())
       }
     }
     window.addEventListener('scroll', onNativeScroll, { passive: true })
@@ -185,7 +187,7 @@ export function useHomeScrollChoreography({
       }
     }
     if (isFinePointer) {
-      if ((window.scrollY || 0) > 4) {
+      if (getCachedScrollY() > 4) {
         initLenis()
       } else {
         for (const evt of triggerEvents) {

@@ -84,10 +84,9 @@ export function getStableViewportWidth(): number {
 let cachedScrollY = 0
 let scrollListenerAttached = false
 
-function ensureScrollListener() {
+function attachScrollListener() {
   if (scrollListenerAttached || typeof window === 'undefined') return
   scrollListenerAttached = true
-  cachedScrollY = window.scrollY || 0
   window.addEventListener(
     'scroll',
     () => {
@@ -95,6 +94,12 @@ function ensureScrollListener() {
     },
     { passive: true },
   )
+}
+
+function ensureScrollListener() {
+  if (scrollListenerAttached || typeof window === 'undefined') return
+  cachedScrollY = window.scrollY || 0
+  attachScrollListener()
 }
 
 /** Returns the latest cached scrollY without forcing layout or synchronous DOM reads inside rAF loops. */
@@ -111,6 +116,7 @@ export function syncCachedScrollY(explicitScrollY?: number): void {
     typeof explicitScrollY === 'number' && !Number.isNaN(explicitScrollY)
       ? explicitScrollY
       : window.scrollY || 0
+  attachScrollListener()
 }
 
 export interface ElementBounds {
@@ -121,9 +127,10 @@ export interface ElementBounds {
 /** Measures an element's document-relative top and height once for zero-reflow scroll tracking. */
 export function measureElementBounds(el: HTMLElement | null): ElementBounds {
   if (!el || typeof window === 'undefined') return { top: 0, height: 1 }
+  const rect = el.getBoundingClientRect()
   return {
-    top: el.getBoundingClientRect().top + (window.scrollY || 0),
-    height: el.offsetHeight || 1,
+    top: rect.top + getCachedScrollY(),
+    height: rect.height || 1,
   }
 }
 
@@ -139,7 +146,7 @@ export function computeRunwayProgress(
 
 const layoutSubscribers = new Set<() => void>()
 let layoutObserverActive = false
-let prevObservedVw = 0
+let prevObservedVw = -1
 let prevObservedBodyH = -1
 let layoutTimerId = 0
 let sharedResizeObserver: ResizeObserver | null = null
@@ -152,6 +159,10 @@ const notifyLayoutSubscribers = () => {
 
 const onSharedResize = () => {
   const vw = getStableViewportWidth()
+  if (prevObservedVw < 0) {
+    prevObservedVw = vw
+    return
+  }
   if (Math.abs(vw - prevObservedVw) > 15) {
     prevObservedVw = vw
     notifyLayoutSubscribers()
@@ -161,18 +172,23 @@ const onSharedResize = () => {
 function attachSharedLayoutObserver() {
   if (layoutObserverActive || typeof window === 'undefined') return
   layoutObserverActive = true
-  prevObservedVw = getStableViewportWidth()
+  prevObservedVw = -1
   prevObservedBodyH = -1
 
   window.addEventListener('resize', onSharedResize, { passive: true })
 
   if (typeof ResizeObserver !== 'undefined' && document.body) {
     sharedResizeObserver = new ResizeObserver((entries) => {
-      const nextBodyH = Math.round(entries[0]?.contentRect.height ?? 0)
+      const rect = entries[0]?.contentRect
+      const nextBodyH = Math.round(rect?.height ?? 0)
+      const entryVw = Math.round(rect?.width ?? 0)
       if (layoutTimerId) window.clearTimeout(layoutTimerId)
       layoutTimerId = window.setTimeout(() => {
         layoutTimerId = 0
-        const nextVw = getStableViewportWidth()
+        if (entryVw > 0 && viewportListenerAttached) {
+          stableVw = entryVw
+        }
+        const nextVw = entryVw > 0 ? entryVw : prevObservedVw > 0 ? prevObservedVw : 1024
         const isMobile = nextVw < 1024
         const hThreshold = isMobile ? 220 : 8
         if (prevObservedBodyH < 0) {

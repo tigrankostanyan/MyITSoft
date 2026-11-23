@@ -1,6 +1,6 @@
 import { Environment, Lightformer } from '@react-three/drei'
 
-export function HeroAppleStudioLighting({ isMobile = false }: { isMobile?: boolean }) {
+export function HeroAppleStudioLighting({ isMobile: _isMobile = false }: { isMobile?: boolean }) {
   return (
     <>
       <ambientLight intensity={0.14} color="#e2e8f0" />
@@ -9,7 +9,7 @@ export function HeroAppleStudioLighting({ isMobile = false }: { isMobile?: boole
       <directionalLight position={[-5.5, 4.5, 2.5]} intensity={1.6} color="#e2ecff" />
       <directionalLight position={[0, 2.5, -6]} intensity={1.2} color="#93c5fd" />
 
-      <Environment resolution={isMobile ? 64 : 128} frames={1}>
+      <Environment resolution={32} frames={1}>
         <group rotation={[-Math.PI / 5, 0, 0]}>
           <Lightformer
             form="rect"

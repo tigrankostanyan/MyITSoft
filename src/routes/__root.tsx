@@ -1,21 +1,29 @@
 /// <reference types="vite/client" />
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
-import { CartToastContainer } from '~/components/shop/CartToast'
-import { NotFoundPage } from '~/components/shop/NotFoundPage'
+import { LazyNotFoundPage } from '~/components/shop/LazyNotFoundPage'
 import { useUIStore } from '~/store/ui-store'
 import '~/styles.css'
 
-const DISPLAY_FONT_URL =
-  'https://fonts.googleapis.com/css2?family=Archivo+Black&display=block'
+const CartToastContainer = lazy(() => import('~/components/shop/CartToast'))
 
 const GOOGLE_FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400..900&family=JetBrains+Mono:wght@400..700&family=Noto+Sans+Armenian:wght@400..900&family=Space+Grotesk:wght@500..700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400..900&family=JetBrains+Mono:wght@400..700&family=Space+Grotesk:wght@500..700&display=swap'
 
-// Flips preloaded font stylesheets from media="print" to "all" once fetched,
+// Flips deferred font stylesheet from media="print" to "all" once fetched,
 // so the font CSS never blocks first paint.
 const FONT_SWAP_SCRIPT =
   "(function(){var l=document.querySelectorAll('link[data-font-swap]');for(var i=0;i<l.length;i++){(function(n){var f=function(){n.media='all'};if(n.sheet){f()}else{n.addEventListener('load',f)}})(l[i])}})()"
+
+function CartToastPortal() {
+  const hasToasts = useUIStore((s) => s.toasts.length > 0)
+  if (!hasToasts) return null
+  return (
+    <Suspense fallback={null}>
+      <CartToastContainer />
+    </Suspense>
+  )
+}
 
 export const Route = createRootRoute({
   head: () => ({
@@ -37,22 +45,6 @@ export const Route = createRootRoute({
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
       {
-        rel: 'preload',
-        as: 'style',
-        href: DISPLAY_FONT_URL,
-      },
-      {
-        rel: 'preload',
-        as: 'style',
-        href: GOOGLE_FONTS_URL,
-      },
-      {
-        rel: 'stylesheet',
-        href: DISPLAY_FONT_URL,
-        media: 'print',
-        'data-font-swap': '',
-      },
-      {
         rel: 'stylesheet',
         href: GOOGLE_FONTS_URL,
         media: 'print',
@@ -61,12 +53,26 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootLayout,
-  notFoundComponent: NotFoundPage,
+  notFoundComponent: LazyNotFoundPage,
 })
 
 function RootLayout() {
   useEffect(() => {
     useUIStore.getState().hydrateLocale()
+
+    const fontLinks = document.querySelectorAll<HTMLLinkElement>('link[data-font-swap]')
+    const cleanups: (() => void)[] = []
+    for (const link of fontLinks) {
+      if (link.sheet) {
+        link.media = 'all'
+      } else {
+        const onLoad = () => {
+          link.media = 'all'
+        }
+        link.addEventListener('load', onLoad, { once: true })
+        cleanups.push(() => link.removeEventListener('load', onLoad))
+      }
+    }
 
     const resetHorizontal = () => {
       if (window.scrollX !== 0) {
@@ -77,6 +83,7 @@ function RootLayout() {
     }
     window.addEventListener('resize', resetHorizontal, { passive: true })
     return () => {
+      for (const off of cleanups) off()
       window.removeEventListener('resize', resetHorizontal)
     }
   }, [])
@@ -89,13 +96,12 @@ function RootLayout() {
           dangerouslySetInnerHTML={{ __html: FONT_SWAP_SCRIPT }}
         />
         <noscript>
-          <link rel="stylesheet" href={DISPLAY_FONT_URL} />
           <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
         </noscript>
       </head>
       <body className="bg-[#0d1220] text-white antialiased selection:bg-[#2563eb] selection:text-white overflow-x-clip">
         <Outlet />
-        <CartToastContainer />
+        <CartToastPortal />
         <Scripts />
       </body>
     </html>

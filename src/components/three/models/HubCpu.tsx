@@ -70,24 +70,13 @@ export function HubCpu({
     <group ref={groupRef} scale={0.82}>
       <mesh>
         <boxGeometry args={[0.74, 0.74, 0.075]} />
-        {isMobile ? (
-          <meshStandardMaterial
-            color="#0f172a"
-            metalness={0.55}
-            roughness={0.28}
-            envMapIntensity={1.5}
-            wireframe={wire}
-          />
-        ) : (
-          <meshPhysicalMaterial
-            color="#0f172a"
-            metalness={0.55}
-            roughness={0.28}
-            clearcoat={0.5}
-            envMapIntensity={1.5}
-            wireframe={wire}
-          />
-        )}
+        <meshStandardMaterial
+          color="#0f172a"
+          metalness={0.55}
+          roughness={0.28}
+          envMapIntensity={1.5}
+          wireframe={wire}
+        />
       </mesh>
 
       <mesh>
@@ -103,24 +92,13 @@ export function HubCpu({
 
       <mesh position={[0, 0, 0.062 + exploded * 0.14]}>
         <boxGeometry args={[0.6, 0.6, 0.056]} />
-        {isMobile ? (
-          <meshStandardMaterial
-            color="#e2e8f0"
-            metalness={0.92}
-            roughness={0.18}
-            envMapIntensity={2.15}
-            wireframe={wire}
-          />
-        ) : (
-          <meshPhysicalMaterial
-            color="#e2e8f0"
-            metalness={0.92}
-            roughness={0.18}
-            clearcoat={0.6}
-            envMapIntensity={2.15}
-            wireframe={wire}
-          />
-        )}
+        <meshStandardMaterial
+          color="#e2e8f0"
+          metalness={0.92}
+          roughness={0.18}
+          envMapIntensity={2.15}
+          wireframe={wire}
+        />
       </mesh>
 
       <mesh position={[0, 0, 0.094 + exploded * 0.18]}>

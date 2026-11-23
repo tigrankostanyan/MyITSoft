@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @source "../src";
+@source not "../src/components/home/TeamSection.tsx";
+@source not "../src/components/home/team";
+@source not "../src/components/shop/Product3DModal.tsx";
+@source not "../src/components/shop/ProductCard.tsx";
 @custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+  font-family: "Archivo Black Fallback";
+  src: local("Arial Black"), local("Arial");
+  font-weight: 900;
+  ascent-override: 83%;
+  descent-override: 25.8%;
+  line-gap-override: 0%;
+  size-adjust: 101%;
+}
 
 @font-face {
   font-family: "Inter Fallback";
@@ -31,7 +45,7 @@
   --color-obsidian: #161622;
   --color-surface: #1e1e2d;
   --color-surface-hover: #262638;
-  --font-display: "Archivo Black", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Archivo Black", "Archivo Black Fallback", "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-heading: "Space Grotesk", "Space Grotesk Fallback", "Inter", "Inter Fallback", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", "Inter Fallback", "Noto Sans Armenian", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Noto Sans Armenian", ui-monospace, monospace;
@@ -441,7 +455,7 @@ html.lenis body {
 @keyframes preloader-shell-exit {
 
   0%,
-  87% {
+  62% {
     opacity: 1;
     transform: translate3d(0, 0, 0);
     pointer-events: auto;
@@ -456,8 +470,8 @@ html.lenis body {
 
 @keyframes preloader-logo-in {
   from {
-    opacity: 0.18;
-    transform: translate3d(0, 20px, 0) scale(0.84);
+    opacity: 0.7;
+    transform: translate3d(0, 10px, 0) scale(0.92);
   }
 
   to {
@@ -468,8 +482,8 @@ html.lenis body {
 
 @keyframes preloader-sub-in {
   from {
-    opacity: 0.15;
-    transform: translate3d(0, 14px, 0);
+    opacity: 0.6;
+    transform: translate3d(0, 8px, 0);
   }
 
   to {
@@ -509,26 +523,26 @@ html.lenis body {
 }
 
 .preloader-shell {
-  animation: preloader-shell-exit 5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: preloader-shell-exit 1.15s cubic-bezier(0.65, 0, 0.35, 1) forwards;
   contain: layout paint;
 }
 
 .preloader-logo {
-  animation: preloader-logo-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: preloader-logo-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .preloader-sub {
-  animation: preloader-sub-in 600ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  animation: preloader-sub-in 320ms cubic-bezier(0.22, 1, 0.36, 1) 30ms both;
 }
 
 .preloader-letter-wrap {
-  animation: preloader-letter-rise 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: preloader-letter-rise 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .preloader-letter-fill {
-  animation: preloader-letter-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: preloader-letter-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .preloader-bar {
-  animation: preloader-bar-fill 3.8s cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  animation: preloader-bar-fill 680ms cubic-bezier(0.22, 1, 0.36, 1) 40ms both;
 }

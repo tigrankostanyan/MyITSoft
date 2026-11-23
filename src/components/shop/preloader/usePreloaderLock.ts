@@ -51,14 +51,12 @@ export function usePreloaderLock(
     const blockScrollEvent = (e: Event) => {
       if (finishedRef.current) return
       e.preventDefault()
-      e.stopPropagation()
     }
 
     const blockScrollKeys = (e: KeyboardEvent) => {
       if (finishedRef.current) return
       if (SCROLL_LOCK_KEYS.has(e.key)) {
         e.preventDefault()
-        e.stopPropagation()
       }
     }
 
@@ -80,7 +78,7 @@ export function usePreloaderLock(
     }
 
     shellEl?.addEventListener('animationend', onAnimationEnd)
-    const fallbackTimer = window.setTimeout(complete, 5200)
+    const fallbackTimer = window.setTimeout(complete, 1350)
 
     window.addEventListener('wheel', blockScrollEvent, { passive: false, capture: true })
     window.addEventListener('touchmove', blockScrollEvent, { passive: false, capture: true })

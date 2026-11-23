@@ -10,10 +10,17 @@ export function drawMacBookScreen(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = g1
     ctx.fillRect(0, 0, 1600, 1000)
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.055)'
-    for (let x = 24; x < 1600; x += 28) {
-      for (let y = 52; y < 960; y += 28) {
-        ctx.fillRect(x, y, 1.5, 1.5)
+    const dotTile = document.createElement('canvas')
+    dotTile.width = 28
+    dotTile.height = 28
+    const dotCtx = dotTile.getContext('2d')
+    if (dotCtx) {
+      dotCtx.fillStyle = 'rgba(255, 255, 255, 0.055)'
+      dotCtx.fillRect(24, 24, 1.5, 1.5)
+      const dotPattern = ctx.createPattern(dotTile, 'repeat')
+      if (dotPattern) {
+        ctx.fillStyle = dotPattern
+        ctx.fillRect(24, 52, 1576, 908)
       }
     }
 

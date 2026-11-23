@@ -17,23 +17,13 @@ export function OuterGimbal({
   isMobile?: boolean
 }) {
   const mats = useMemo(() => {
-    const outerRim = isMobile
-      ? new THREE.MeshStandardMaterial({
-          color: '#e2e8f0',
-          metalness: 0.92,
-          roughness: 0.16,
-          envMapIntensity: 2.2,
-          wireframe: wire,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          color: '#e2e8f0',
-          metalness: 0.92,
-          roughness: 0.16,
-          clearcoat: 0.75,
-          clearcoatRoughness: 0.1,
-          envMapIntensity: 2.2,
-          wireframe: wire,
-        })
+    const outerRim = new THREE.MeshStandardMaterial({
+      color: '#e2e8f0',
+      metalness: 0.92,
+      roughness: 0.16,
+      envMapIntensity: 2.2,
+      wireframe: wire,
+    })
 
     const innerRail = new THREE.MeshStandardMaterial({
       color: '#f8fafc',
@@ -124,22 +114,13 @@ export function MidGimbal({
   isMobile?: boolean
 }) {
   const mats = useMemo(() => {
-    const rim = isMobile
-      ? new THREE.MeshStandardMaterial({
-          color: '#cbd5e1',
-          metalness: 0.92,
-          roughness: 0.15,
-          envMapIntensity: 2.15,
-          wireframe: wire,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          color: '#cbd5e1',
-          metalness: 0.92,
-          roughness: 0.15,
-          clearcoat: 0.7,
-          envMapIntensity: 2.15,
-          wireframe: wire,
-        })
+    const rim = new THREE.MeshStandardMaterial({
+      color: '#cbd5e1',
+      metalness: 0.92,
+      roughness: 0.15,
+      envMapIntensity: 2.15,
+      wireframe: wire,
+    })
 
     const glow = new THREE.MeshStandardMaterial({
       color: '#38bdf8',
@@ -149,7 +130,7 @@ export function MidGimbal({
     })
 
     return { rim, glow }
-  }, [wire, isMobile])
+  }, [wire])
 
   useEffect(() => {
     return () => {

@@ -1,7 +1,23 @@
 import { lazy, memo, Suspense, useCallback, useEffect, useState } from 'react'
-import { useUIStore } from '~/store/ui-store'
+import { getCachedScrollY } from '~/lib/scroll-math'
 
 const HeroScrollScene = lazy(() => import('~/components/three/HeroScrollScene'))
+
+let hero3dPreloaded = false
+
+function preloadHero3D() {
+  if (hero3dPreloaded) return
+  hero3dPreloaded = true
+  if (typeof document !== 'undefined') {
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'fetch'
+    link.href = '/models/macbook.glb'
+    link.crossOrigin = 'anonymous'
+    document.head.appendChild(link)
+  }
+  void import('~/components/three/HeroScrollScene')
+}
 
 interface Hero3DStageProps {
   scrollProgressRef: React.MutableRefObject<number>
@@ -16,29 +32,20 @@ export const Hero3DStage = memo(function Hero3DStage({
   scrollProgressRef,
   posterWrapRef,
 }: Hero3DStageProps) {
-  const preloaderOpen = useUIStore((s) => s.preloaderOpen)
   const [interactive, setInteractive] = useState(false)
   const [canvasReady, setCanvasReady] = useState(false)
   const [posterMounted, setPosterMounted] = useState(true)
 
   useEffect(() => {
-    if (window.scrollY > 4) {
+    if (import.meta.env.DEV || getCachedScrollY() > 4) {
+      preloadHero3D()
       setInteractive(true)
       return
     }
 
     let cancelled = false
-    const activate = () => {
-      if (cancelled) return
-      cancelled = true
-      cleanup()
-      setInteractive(true)
-    }
-
-    const onScroll = () => {
-      if (window.scrollY > 4) activate()
-    }
-
+    let startX: number | null = null
+    let startY: number | null = null
     const events: (keyof WindowEventMap)[] = [
       'pointerdown',
       'wheel',
@@ -46,26 +53,9 @@ export const Hero3DStage = memo(function Hero3DStage({
       'keydown',
     ]
 
-    const cleanup = () => {
-      for (const evt of events) {
-        window.removeEventListener(evt, activate)
-      }
-      window.removeEventListener('scroll', onScroll)
+    const onScroll = () => {
+      if (getCachedScrollY() > 4) activate()
     }
-
-    for (const evt of events) {
-      window.addEventListener(evt, activate, { passive: true, once: true })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-
-    return cleanup
-  }, [])
-
-  useEffect(() => {
-    if (interactive || preloaderOpen) return
-
-    let startX: number | null = null
-    let startY: number | null = null
 
     const onPointerMove = (e: PointerEvent) => {
       if (startX === null || startY === null) {
@@ -73,39 +63,35 @@ export const Hero3DStage = memo(function Hero3DStage({
         startY = e.clientY
         return
       }
-      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 24) {
-        window.removeEventListener('pointermove', onPointerMove)
-        setInteractive(true)
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 4) {
+        activate()
       }
     }
 
+    const cleanup = () => {
+      for (const evt of events) {
+        window.removeEventListener(evt, activate)
+      }
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('scroll', onScroll)
+    }
+
+    function activate() {
+      if (cancelled) return
+      cancelled = true
+      cleanup()
+      preloadHero3D()
+      setInteractive(true)
+    }
+
+    for (const evt of events) {
+      window.addEventListener(evt, activate, { passive: true, once: true })
+    }
     window.addEventListener('pointermove', onPointerMove, { passive: true })
-    return () => window.removeEventListener('pointermove', onPointerMove)
-  }, [interactive, preloaderOpen])
+    window.addEventListener('scroll', onScroll, { passive: true })
 
-  // Warm the WebGL scene chunk during idle time so the first scroll/input does
-  // not pay the parse + init cost on the main thread (avoids a visible stall).
-  useEffect(() => {
-    if (interactive || preloaderOpen) return
-    let idleId: number | undefined
-    const ric = window.requestIdleCallback
-    const warm = () => {
-      void import('~/components/three/HeroScrollScene')
-    }
-    if (typeof ric === 'function') {
-      idleId = ric(warm, { timeout: 3000 })
-    } else {
-      idleId = window.setTimeout(warm, 2500)
-    }
-    return () => {
-      if (idleId === undefined) return
-      if (typeof ric === 'function') {
-        window.cancelIdleCallback(idleId)
-      } else {
-        window.clearTimeout(idleId)
-      }
-    }
-  }, [interactive, preloaderOpen])
+    return cleanup
+  }, [])
 
   useEffect(() => {
     if (!canvasReady) return
@@ -119,24 +105,32 @@ export const Hero3DStage = memo(function Hero3DStage({
 
   return (
     <div className="relative h-full w-full [container-type:size]">
-      {interactive && (
-        <Suspense fallback={null}>
-          <HeroScrollScene
-            scrollProgressRef={scrollProgressRef}
-            onReady={handleReady}
-          />
-        </Suspense>
-      )}
+      <div
+        className={`h-full w-full transition-opacity duration-200 ease-out ${
+          canvasReady ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {interactive && (
+          <Suspense fallback={null}>
+            <HeroScrollScene
+              scrollProgressRef={scrollProgressRef}
+              onReady={handleReady}
+            />
+          </Suspense>
+        )}
+      </div>
       {posterMounted && (
         <div
-          ref={posterWrapRef}
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200 ease-out will-change-transform ${
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-200 ease-out ${
             canvasReady ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <div className="relative aspect-[618/1373] w-[min(100cqw,calc(100cqh*618/1373))] md:aspect-[1440/900] md:w-[min(100cqw,calc(100cqh*1440/900))]">
-            <picture className="absolute top-[15.222%] left-[3.236%] block h-[22.942%] w-[84.142%] md:top-[23.333%] md:left-[45.625%] md:h-[64.333%] md:w-[53.958%]">
+          <div
+            ref={posterWrapRef}
+            className="relative aspect-[618/1373] w-[min(100cqw,calc(100cqh*618/1373))] will-change-[transform,opacity] md:aspect-[1400/900] md:w-[min(100cqw,calc(100cqh*1400/900))]"
+          >
+            <picture className="absolute top-[15.222%] left-[3.236%] block h-[22.942%] w-[84.142%] md:top-[23.241%] md:left-[40.893%] md:h-[64.815%] md:w-[57.917%]">
               <source
                 media="(max-width: 767px)"
                 srcSet="/images/hero-stage-mobile.webp"
@@ -145,11 +139,11 @@ export const Hero3DStage = memo(function Hero3DStage({
               />
               <img
                 src="/images/hero-stage-desktop.webp"
-                srcSet="/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop.webp 777w"
-                sizes="min(54vw, 86.3vh)"
+                srcSet="/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop-800.webp 800w, /images/hero-stage-desktop.webp 973w"
+                sizes="min(57.9vw, 90.1vh)"
                 alt=""
-                width={777}
-                height={579}
+                width={973}
+                height={700}
                 fetchPriority="high"
                 decoding="async"
                 className="h-full w-full object-contain"

@@ -77,3 +77,4 @@ export function CartToastContainer() {
     </div>
   )
 }
+export default CartToastContainer

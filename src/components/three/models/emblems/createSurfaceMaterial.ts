@@ -2,9 +2,8 @@ import * as THREE from 'three'
 
 export function createSurfaceMaterial(
   params: THREE.MeshPhysicalMaterialParameters,
-  isMobile: boolean,
+  _isMobile: boolean,
 ): THREE.Material {
-  if (!isMobile) return new THREE.MeshPhysicalMaterial(params)
   return new THREE.MeshStandardMaterial({
     color: params.color,
     emissive: params.emissive,

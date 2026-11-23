@@ -14,6 +14,9 @@ export default defineConfig({
     port: 4000,
     allowedHosts: true,
   },
+  optimizeDeps: {
+    include: ['three', '@react-three/fiber', '@react-three/drei', 'lenis'],
+  },
   // tanstackStart must come before viteReact
   plugins: [
     tsConfigPaths(),

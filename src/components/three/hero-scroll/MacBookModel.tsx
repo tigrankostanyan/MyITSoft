@@ -5,6 +5,10 @@ import { useMacBookCleanScreenTexture, useStudioShadowTexture } from './macbookT
 
 export const MACBOOK_MODEL_URL = '/models/macbook.glb'
 
+if (typeof window !== 'undefined') {
+  useGLTF.preload(MACBOOK_MODEL_URL, false, true)
+}
+
 export function RealMacBookProModel({
   screenMatRef,
   shadowMatRef,
@@ -47,103 +51,90 @@ export function RealMacBookProModel({
   }, [gltf.scene])
 
   useEffect(() => {
-    const screenMat = isMobile
-      ? new THREE.MeshStandardMaterial({
-          map: screenTexture ?? undefined,
-          emissiveMap: screenTexture ?? undefined,
-          color: new THREE.Color('#ffffff'),
-          emissive: new THREE.Color('#ffffff'),
-          emissiveIntensity: 1.0,
-          roughness: 0.08,
-          metalness: 0.05,
-          envMapIntensity: 0.55,
-          transparent: true,
-          opacity: 1,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          map: screenTexture ?? undefined,
-          emissiveMap: screenTexture ?? undefined,
-          color: new THREE.Color('#ffffff'),
-          emissive: new THREE.Color('#ffffff'),
-          emissiveIntensity: 1.0,
-          roughness: 0.08,
-          metalness: 0.05,
-          clearcoat: 0.9,
-          clearcoatRoughness: 0.06,
-          reflectivity: 0.95,
-          envMapIntensity: 0.55,
-          transparent: true,
-          opacity: 1,
-        })
+    const screenMat = new THREE.MeshStandardMaterial({
+      map: screenTexture ?? undefined,
+      emissiveMap: screenTexture ?? undefined,
+      color: new THREE.Color('#ffffff'),
+      emissive: new THREE.Color('#ffffff'),
+      emissiveIntensity: 1.0,
+      roughness: 0.08,
+      metalness: 0.05,
+      envMapIntensity: 0.55,
+      transparent: true,
+      opacity: 1,
+    })
 
-    const keyMat = isMobile
-      ? new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#0a0d14'),
-          metalness: 0.14,
-          roughness: 0.72,
-          envMapIntensity: 0.65,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color('#0a0d14'),
-          metalness: 0.14,
-          roughness: 0.72,
-          envMapIntensity: 0.65,
-        })
+    const keyMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#0a0d14'),
+      metalness: 0.14,
+      roughness: 0.72,
+      envMapIntensity: 0.65,
+    })
 
-    const bezelMat = isMobile
-      ? new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#04060a'),
-          metalness: 0.1,
-          roughness: 0.06,
-          envMapIntensity: 1.95,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color('#04060a'),
-          metalness: 0.1,
-          roughness: 0.06,
-          clearcoat: 1.0,
-          clearcoatRoughness: 0.04,
-          reflectivity: 1.0,
-          envMapIntensity: 1.95,
-        })
+    const bezelMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#04060a'),
+      metalness: 0.1,
+      roughness: 0.06,
+      envMapIntensity: 1.95,
+    })
 
-    const metalMat = isMobile
-      ? new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#c9d1de'),
-          metalness: 0.94,
-          roughness: 0.19,
-          envMapIntensity: 2.25,
-        })
-      : new THREE.MeshPhysicalMaterial({
-          color: new THREE.Color('#c9d1de'),
-          metalness: 0.94,
-          roughness: 0.19,
-          clearcoat: 0.35,
-          clearcoatRoughness: 0.16,
-          reflectivity: 0.95,
-          envMapIntensity: 2.25,
-        })
+    const metalMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#c9d1de'),
+      metalness: 0.94,
+      roughness: 0.19,
+      envMapIntensity: 2.25,
+    })
+
+    const shouldDisposeOrig = !clonedScene.userData.origDisposed
+    const replacedMats = new Set<THREE.Material>()
 
     clonedScene.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return
       const mat = obj.material
-      const matName = mat && !Array.isArray(mat) ? mat.name : ''
+      const currentMatName = mat && !Array.isArray(mat) ? mat.name : ''
+      if (typeof obj.userData.origMatName !== 'string') {
+        obj.userData.origMatName = currentMatName
+      }
+      const matName = obj.userData.origMatName as string
+      let nextMat: THREE.Material | null = null
 
       if (obj.name === 'Screen' || matName === 'sfCQkHOWyrsLmor') {
-        obj.material = screenMat
+        nextMat = screenMat
         screenMatRef.current = screenMat
       } else if (matName === 'eJObPwhgFzvfaoZ') {
-        obj.material = keyMat
+        nextMat = keyMat
       } else if (
         matName === 'WnHKXHhScfUbJQi' ||
         matName === 'fNHiBfcxHUJCahl' ||
         matName === 'LtEafgAVRolQqRw'
       ) {
-        obj.material = bezelMat
+        nextMat = bezelMat
       } else if (mat instanceof THREE.MeshStandardMaterial) {
-        obj.material = metalMat
+        nextMat = metalMat
+      }
+
+      if (nextMat) {
+        if (shouldDisposeOrig && mat && !Array.isArray(mat) && !mat.userData?.origDisposed) {
+          replacedMats.add(mat)
+        }
+        obj.material = nextMat
       }
     })
+
+    if (shouldDisposeOrig) {
+      clonedScene.userData.origDisposed = true
+      for (const orig of replacedMats) {
+        orig.userData.origDisposed = true
+        const texRecord = orig as unknown as Record<string, unknown>
+        for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'aoMap']) {
+          const tex = texRecord[key]
+          if (tex instanceof THREE.Texture) {
+            tex.dispose()
+          }
+        }
+        orig.dispose()
+      }
+    }
 
     return () => {
       screenMat.dispose()
