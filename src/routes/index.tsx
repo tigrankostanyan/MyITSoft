@@ -171,7 +171,11 @@ function Home() {
             cartFloorGlowRef={cartFloorGlowRef}
           />
         ) : (
-          <div className="min-h-[150vh]" aria-hidden="true" />
+          <div
+            className="min-h-[150vh]"
+            aria-hidden="true"
+            style={{ contain: 'layout paint style' }}
+          />
         )}
       </main>
 

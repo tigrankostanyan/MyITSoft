@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
@@ -7,25 +7,6 @@ import tsConfigPaths from 'vite-tsconfig-paths'
 
 const STATIC_CACHE_HEADERS = {
   'cache-control': 'public, max-age=31536000, immutable',
-}
-
-function ssrInlineCssPlugin(): Plugin {
-  const virtualId = 'virtual:ssr-inline-css'
-  const resolvedId = `\0${virtualId}`
-  return {
-    name: 'ssr-inline-css',
-    resolveId(id) {
-      if (id === virtualId) return resolvedId
-    },
-    load(this: { environment?: { name?: string } }, id: string, options?: { ssr?: boolean }) {
-      if (id !== resolvedId) return
-      const isSsr = Boolean(options?.ssr || this.environment?.name === 'ssr')
-      if (isSsr) {
-        return `import css from '/src/styles.css?inline';\nexport default css;`
-      }
-      return 'export default "";'
-    },
-  }
 }
 
 export default defineConfig({
@@ -37,7 +18,6 @@ export default defineConfig({
   plugins: [
     tsConfigPaths(),
     tailwindcss(),
-    ssrInlineCssPlugin(),
     tanstackStart(),
     nitro({
       compressPublicAssets: { gzip: true, brotli: true },

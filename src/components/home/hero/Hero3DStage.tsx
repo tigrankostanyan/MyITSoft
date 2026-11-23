@@ -83,6 +83,30 @@ export const Hero3DStage = memo(function Hero3DStage({
     return () => window.removeEventListener('pointermove', onPointerMove)
   }, [interactive, preloaderOpen])
 
+  // Warm the WebGL scene chunk during idle time so the first scroll/input does
+  // not pay the parse + init cost on the main thread (avoids a visible stall).
+  useEffect(() => {
+    if (interactive || preloaderOpen) return
+    let idleId: number | undefined
+    const ric = window.requestIdleCallback
+    const warm = () => {
+      void import('~/components/three/HeroScrollScene')
+    }
+    if (typeof ric === 'function') {
+      idleId = ric(warm, { timeout: 3000 })
+    } else {
+      idleId = window.setTimeout(warm, 2500)
+    }
+    return () => {
+      if (idleId === undefined) return
+      if (typeof ric === 'function') {
+        window.cancelIdleCallback(idleId)
+      } else {
+        window.clearTimeout(idleId)
+      }
+    }
+  }, [interactive, preloaderOpen])
+
   useEffect(() => {
     if (!canvasReady) return
     const timer = window.setTimeout(() => setPosterMounted(false), 250)

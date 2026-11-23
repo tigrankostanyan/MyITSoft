@@ -109,6 +109,7 @@ export const HeroSection = memo(function HeroSection({
       <div
         className="pointer-events-none relative h-[52vh] bg-gradient-to-b from-[#0d1220] via-[#0c1428] to-[#0d1220] sm:h-[60vh] md:h-[68vh]"
         aria-hidden="true"
+        style={{ contain: 'layout paint style' }}
       />
 
       <HeroWhySection />

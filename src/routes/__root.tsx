@@ -4,7 +4,7 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import { CartToastContainer } from '~/components/shop/CartToast'
 import { NotFoundPage } from '~/components/shop/NotFoundPage'
 import { useUIStore } from '~/store/ui-store'
-import ssrInlineCss from 'virtual:ssr-inline-css'
+import '~/styles.css'
 
 const DISPLAY_FONT_URL =
   'https://fonts.googleapis.com/css2?family=Archivo+Black&display=block'
@@ -12,10 +12,10 @@ const DISPLAY_FONT_URL =
 const GOOGLE_FONTS_URL =
   'https://fonts.googleapis.com/css2?family=Inter:wght@400..900&family=JetBrains+Mono:wght@400..700&family=Noto+Sans+Armenian:wght@400..900&family=Space+Grotesk:wght@500..700&display=swap'
 
-const resolvedCss =
-  typeof document !== 'undefined'
-    ? (document.getElementById('app-css')?.textContent ?? ssrInlineCss)
-    : ssrInlineCss
+// Flips preloaded font stylesheets from media="print" to "all" once fetched,
+// so the font CSS never blocks first paint.
+const FONT_SWAP_SCRIPT =
+  "(function(){var l=document.querySelectorAll('link[data-font-swap]');for(var i=0;i<l.length;i++){(function(n){var f=function(){n.media='all'};if(n.sheet){f()}else{n.addEventListener('load',f)}})(l[i])}})()"
 
 export const Route = createRootRoute({
   head: () => ({
@@ -36,7 +36,28 @@ export const Route = createRootRoute({
       { rel: 'icon', type: 'image/png', href: '/myitsoft-logo-icon.png' },
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
       { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      { rel: 'stylesheet', href: DISPLAY_FONT_URL },
+      {
+        rel: 'preload',
+        as: 'style',
+        href: DISPLAY_FONT_URL,
+      },
+      {
+        rel: 'preload',
+        as: 'style',
+        href: GOOGLE_FONTS_URL,
+      },
+      {
+        rel: 'stylesheet',
+        href: DISPLAY_FONT_URL,
+        media: 'print',
+        'data-font-swap': '',
+      },
+      {
+        rel: 'stylesheet',
+        href: GOOGLE_FONTS_URL,
+        media: 'print',
+        'data-font-swap': '',
+      },
     ],
   }),
   component: RootLayout,
@@ -45,21 +66,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      void import('~/styles.css')
-    }
-
     useUIStore.getState().hydrateLocale()
-
-    const fontRaf = requestAnimationFrame(() => {
-      if (!document.querySelector('link[data-myitsoft-fonts="1"]')) {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = GOOGLE_FONTS_URL
-        link.dataset.myitsoftFonts = '1'
-        document.head.appendChild(link)
-      }
-    })
 
     const resetHorizontal = () => {
       if (window.scrollX !== 0) {
@@ -70,7 +77,6 @@ function RootLayout() {
     }
     window.addEventListener('resize', resetHorizontal, { passive: true })
     return () => {
-      cancelAnimationFrame(fontRaf)
       window.removeEventListener('resize', resetHorizontal)
     }
   }, [])
@@ -79,8 +85,11 @@ function RootLayout() {
     <html lang="en" className="dark overflow-x-clip">
       <head>
         <HeadContent />
-        <style id="app-css" dangerouslySetInnerHTML={{ __html: resolvedCss }} />
+        <script
+          dangerouslySetInnerHTML={{ __html: FONT_SWAP_SCRIPT }}
+        />
         <noscript>
+          <link rel="stylesheet" href={DISPLAY_FONT_URL} />
           <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
         </noscript>
       </head>
