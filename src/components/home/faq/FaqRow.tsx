@@ -32,11 +32,11 @@ export const FaqRow = memo(function FaqRow({
         type="button"
         aria-expanded={isOpen}
         onClick={() => onToggle(idx)}
-        className="flex w-full items-center justify-between gap-2.5 py-3.5 text-left transition-colors duration-200 min-[380px]:gap-4 min-[380px]:py-4 sm:gap-8 sm:py-7 lg:py-8 cursor-pointer"
+        className="flex w-full items-center justify-between gap-2.5 py-3 text-left transition-colors duration-200 min-[380px]:gap-4 min-[380px]:py-3.5 sm:gap-6 sm:py-4 lg:gap-7 lg:py-4 xl:py-[18px] cursor-pointer"
       >
-        <div className="flex min-w-0 items-center gap-3 min-[380px]:gap-4 sm:gap-8">
+        <div className="flex min-w-0 items-center gap-3 min-[380px]:gap-4 sm:gap-6 lg:gap-7">
           <span
-            className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-display text-sm tabular-nums transition-all duration-300 min-[380px]:h-12 min-[380px]:w-12 min-[380px]:text-lg sm:h-[70px] sm:w-[70px] sm:text-2xl lg:text-[26px]"
+            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border font-display text-sm tabular-nums transition-all duration-300 min-[380px]:h-11 min-[380px]:w-11 min-[380px]:text-base sm:h-12 sm:w-12 sm:text-lg lg:h-[54px] lg:w-[54px] lg:text-xl xl:h-[58px] xl:w-[58px] xl:text-[22px]"
             style={{
               borderColor: isOpen ? item.accent : 'rgba(186, 230, 253, 0.3)',
               backgroundColor: isOpen ? 'rgba(15, 25, 52, 0.96)' : 'rgba(8, 13, 28, 0.94)',
@@ -50,7 +50,7 @@ export const FaqRow = memo(function FaqRow({
           </span>
 
           <h3
-            className={`font-heading text-[13.5px] font-bold leading-snug tracking-tight transition-colors duration-200 min-[380px]:text-[15px] sm:text-xl lg:text-[25px] xl:text-[27px] ${
+            className={`font-heading text-[13.5px] font-bold leading-snug tracking-tight transition-colors duration-200 min-[380px]:text-[15px] sm:text-lg lg:text-[20px] xl:text-[22px] ${
               isOpen ? 'text-white' : 'text-white/92 group-hover:text-sky-200'
             }`}
           >
@@ -60,7 +60,7 @@ export const FaqRow = memo(function FaqRow({
 
         <ChevronDown
           aria-hidden="true"
-          className={`h-4 w-4 shrink-0 transition-all duration-300 min-[380px]:h-5 min-[380px]:w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 ${
+          className={`h-4 w-4 shrink-0 transition-all duration-300 min-[380px]:h-5 min-[380px]:w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ${
             isOpen ? 'rotate-180 text-[#00e5ff]' : 'text-white/60 group-hover:text-white/95'
           }`}
         />
@@ -72,14 +72,14 @@ export const FaqRow = memo(function FaqRow({
         }`}
       >
         <div className="overflow-hidden">
-          <p className="pb-4 pl-[52px] pr-2 text-xs leading-relaxed text-sky-100/80 min-[380px]:pl-[64px] min-[380px]:text-sm sm:pb-6 sm:pl-[102px] sm:pr-12 sm:text-base lg:text-[18px] lg:leading-relaxed">
+          <p className="pb-3.5 pl-[48px] pr-2 text-xs leading-relaxed text-sky-100/80 min-[380px]:pl-[60px] min-[380px]:text-sm sm:pb-5 sm:pl-[72px] sm:pr-10 sm:text-[15px] lg:pl-[82px] lg:text-[16px] lg:leading-relaxed xl:pl-[86px]">
             {item.a}
           </p>
         </div>
       </div>
 
       {!isLast && (
-        <div className="ml-[40px] min-[380px]:ml-[48px] sm:ml-[70px]">
+        <div className="ml-[36px] min-[380px]:ml-[44px] sm:ml-[48px] lg:ml-[54px] xl:ml-[58px]">
           <div
             ref={(el) => {
               lineRefs.current[idx] = el

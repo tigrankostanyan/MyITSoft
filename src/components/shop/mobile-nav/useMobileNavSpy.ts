@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { startTransition, useEffect, useRef, useState } from 'react'
 import {
   getCachedScrollY,
   getStableViewportHeight,
@@ -131,7 +131,9 @@ export function useMobileNavSpy({
     const el = navRef.current
     if (!el || !isMobileViewport) return
     const applyWidth = (w: number) => {
-      if (w > 0) setBarWidth((prev) => (prev === w ? prev : w))
+      if (w > 0) {
+        startTransition(() => setBarWidth((prev) => (prev === w ? prev : w)))
+      }
     }
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver((entries) => {
@@ -151,6 +153,7 @@ export function useMobileNavSpy({
   }, [navRef, isMobileViewport])
 
   useEffect(() => {
+    if (!isMobileViewport) return
     targetIdxRef.current = activeIndex
     let rafId = 0
     let lastTime = performance.now()
@@ -196,7 +199,7 @@ export function useMobileNavSpy({
     return () => {
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [activeIndex, barWidth, itemCount, fillPathRef, clipPathRef, strokePathRef, orbRef])
+  }, [isMobileViewport, activeIndex, barWidth, itemCount, fillPathRef, clipPathRef, strokePathRef, orbRef])
 
   return barWidth
 }

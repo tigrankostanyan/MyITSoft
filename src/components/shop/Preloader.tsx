@@ -65,7 +65,7 @@ export function Preloader() {
         <div className="font-display -my-[0.12em] flex items-baseline justify-center text-[clamp(2.35rem,13.5vw,11.8rem)] leading-[1.2] tracking-[-0.025em]">
           <span className="sr-only">MyITSoft</span>
           {BRAND_LETTERS.map((ch, idx) => {
-            const delayMs = 10 + idx * 22
+            const delayMs = 350 + idx * 340
             return (
               <span
                 key={`${ch}-${idx}`}

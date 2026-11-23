@@ -267,5 +267,15 @@ export interface SiteTranslations {
   }
   categoryLabels: Record<'websites' | 'automation' | 'bots' | 'ecommerce' | 'cloud', string>
   products: Record<string, ProductTranslation>
+  notFound: {
+    badge: string
+    codeLabel: string
+    titlePrefix: string
+    titleHighlight: string
+    description: string
+    backHome: string
+    contactUs: string
+    quickLinksTitle: string
+  }
 }
 

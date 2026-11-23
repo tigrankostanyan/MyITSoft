@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Clock, Mail, MapPin, Phone } from 'lucide-react'
 import { MAPS_URL } from '~/components/contact/contactData'
 import {
@@ -21,6 +21,7 @@ export const NewsletterFooter = memo(function NewsletterFooter({
   onJumpTo,
 }: NewsletterFooterProps) {
   const { t } = useTranslations()
+  const navigate = useNavigate()
 
   const navLinks = [
     { label: t.footer.navLinks.home, target: 'hero' },
@@ -35,7 +36,19 @@ export const NewsletterFooter = memo(function NewsletterFooter({
       return
     }
     const el = document.getElementById(target)
-    el?.scrollIntoView({ behavior: 'smooth' })
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    void navigate({ to: '/' }).then(() => {
+      if (target === 'hero') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+      window.setTimeout(() => {
+        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
+      }, 280)
+    })
   }
 
   return (

@@ -65,13 +65,7 @@ export const HeroSection = memo(function HeroSection({
               </span>
             </div>
 
-            <h1
-              className="text-[clamp(1.85rem,5.4vw,4.75rem)] leading-[1.04] font-extrabold tracking-[-0.03em] text-white drop-shadow-[0_8px_32px_rgba(2,6,23,0.45)]"
-              style={{
-                fontFamily:
-                  '"Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
-              }}
-            >
+            <h1 className="font-display text-[clamp(1.65rem,4.6vw,4.35rem)] leading-[1.03] tracking-[-0.02em] text-white drop-shadow-[0_8px_32px_rgba(2,6,23,0.45)]">
               <span className="block sm:whitespace-nowrap">{t.hero.titleLine1}</span>
               <span className="block bg-gradient-to-r from-[#bae6fd] via-[#7dd3fc] to-[#38bdf8] bg-clip-text pb-[0.06em] text-transparent sm:whitespace-nowrap">
                 {t.hero.titleLine2}

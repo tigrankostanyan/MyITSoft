@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Sparkles } from 'lucide-react'
 import { useTranslations } from '~/store/ui-store'
 import { FAQS } from './faq/faqData'
@@ -19,6 +19,7 @@ export const FaqSection = memo(function FaqSection() {
   const titleWrapRef = useRef<HTMLDivElement>(null)
   const glassCardRef = useRef<HTMLDivElement>(null)
   const spineRef = useRef<HTMLDivElement>(null)
+  const scrollBoxRef = useRef<HTMLDivElement>(null)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
   const lineRefs = useRef<(HTMLDivElement | null)[]>([])
   const badgeRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -27,6 +28,42 @@ export const FaqSection = memo(function FaqSection() {
 
   const handleToggleFaq = useCallback((idx: number) => {
     setOpenFaq((cur) => (cur === idx ? null : idx))
+  }, [])
+
+  useEffect(() => {
+    if (openFaq === null) return
+
+    const ensureRowVisible = () => {
+      const box = scrollBoxRef.current
+      const row = rowRefs.current[openFaq]
+      if (!box || !row) return
+
+      const boxRect = box.getBoundingClientRect()
+      const rowRect = row.getBoundingClientRect()
+      if (rowRect.bottom > boxRect.bottom - 8) {
+        box.scrollBy({ top: rowRect.bottom - boxRect.bottom + 16, behavior: 'smooth' })
+      } else if (rowRect.top < boxRect.top) {
+        box.scrollBy({ top: rowRect.top - boxRect.top - 8, behavior: 'smooth' })
+      }
+    }
+
+    const t1 = window.setTimeout(ensureRowVisible, 160)
+    const t2 = window.setTimeout(ensureRowVisible, 330)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [openFaq])
+
+  const handleListWheel: React.WheelEventHandler<HTMLDivElement> = useCallback((e) => {
+    const el = e.currentTarget
+    if (el.scrollHeight <= el.clientHeight + 2) return
+    const scrollingDownWithRoom =
+      e.deltaY > 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1
+    const scrollingUpWithRoom = e.deltaY < 0 && el.scrollTop > 1
+    if (scrollingDownWithRoom || scrollingUpWithRoom) {
+      e.stopPropagation()
+    }
   }, [])
 
   const choreographyRefs = useMemo(
@@ -55,7 +92,7 @@ export const FaqSection = memo(function FaqSection() {
     <section id="faq" className="relative overflow-x-clip border-t border-white/10 bg-[#070b16]">
       <div ref={runwayRef} className="relative h-[340vh] sm:h-[380vh] lg:h-[420vh]">
         <div
-          className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden pt-[66px] pb-[88px] min-[576px]:pt-20 min-[576px]:pb-6 lg:pt-22 lg:pb-0"
+          className="sticky top-0 flex h-screen w-full flex-col justify-center overflow-hidden pt-[66px] pb-[84px] min-[576px]:pt-20 min-[576px]:pb-6 lg:pt-20 lg:pb-6"
           style={{ perspective: '1650px', contain: 'layout paint' }}
         >
           <FaqAmbientBackdrop
@@ -64,9 +101,9 @@ export const FaqSection = memo(function FaqSection() {
             badgeRefs={badgeRefs}
           />
 
-          <div className="site-container relative z-10 flex flex-1 items-center justify-center">
+          <div className="site-container relative z-10 flex min-h-0 flex-1 items-center justify-center">
             <div
-              className="relative flex h-full w-full items-center justify-center"
+              className="relative flex h-full min-h-0 w-full items-center justify-center"
               style={{ transformStyle: 'preserve-3d' }}
             >
               <div
@@ -117,15 +154,15 @@ export const FaqSection = memo(function FaqSection() {
 
               <div
                 ref={cardStageRef}
-                className="relative z-20 flex w-full flex-col items-center justify-center will-change-transform"
+                className="relative z-20 flex h-full min-h-0 w-full flex-col items-center justify-center will-change-transform"
                 style={{
                   transformStyle: 'preserve-3d',
                   opacity: 0,
                   visibility: 'hidden',
                 }}
               >
-                <div ref={titleWrapRef} className="mb-3 text-center will-change-transform sm:mb-9">
-                  <h2 className="font-display text-[clamp(1.45rem,5.2vw,3.9rem)] leading-[1.02] tracking-tight text-white uppercase drop-shadow-[0_12px_36px_rgba(56,189,248,0.22)]">
+                <div ref={titleWrapRef} className="mb-2.5 shrink-0 text-center will-change-transform sm:mb-4 lg:mb-5">
+                  <h2 className="font-display text-[clamp(1.35rem,3.6vw,3.1rem)] leading-[1.02] tracking-tight text-white uppercase drop-shadow-[0_12px_36px_rgba(56,189,248,0.22)]">
                     {t.faq.titlePrefix}{' '}
                     <span className="bg-gradient-to-r from-sky-200 via-cyan-300 to-indigo-200 bg-clip-text text-transparent">
                       {t.faq.titleHighlight}
@@ -135,15 +172,19 @@ export const FaqSection = memo(function FaqSection() {
 
                 <div
                   ref={glassCardRef}
-                  className="relative w-full will-change-transform"
+                  className="relative flex min-h-0 w-full flex-1 flex-col will-change-transform"
                   style={{ transformStyle: 'preserve-3d' }}
                 >
-                  <div className="max-h-[64svh] overflow-x-hidden overflow-y-auto py-2 no-scrollbar min-[576px]:max-h-[70vh] sm:py-5 lg:max-h-[76vh]">
+                  <div
+                    ref={scrollBoxRef}
+                    onWheel={handleListWheel}
+                    className="min-h-0 flex-1 overflow-y-auto py-1 pb-4 no-scrollbar sm:py-2 sm:pb-6"
+                  >
                     <div className="relative">
                       <div
                         ref={spineRef}
                         aria-hidden="true"
-                        className="pointer-events-none absolute top-11 bottom-11 left-[19.5px] w-px origin-top bg-gradient-to-b from-sky-300/45 via-cyan-300/30 to-indigo-400/20 will-change-transform min-[380px]:top-12 min-[380px]:bottom-12 min-[380px]:left-[23.5px] sm:top-14 sm:bottom-14 sm:left-[34.5px]"
+                        className="pointer-events-none absolute top-[30px] bottom-[30px] left-[17.5px] w-px origin-top bg-gradient-to-b from-sky-300/45 via-cyan-300/30 to-indigo-400/20 will-change-transform min-[380px]:top-9 min-[380px]:bottom-9 min-[380px]:left-[21.5px] sm:top-10 sm:bottom-10 sm:left-[23.5px] lg:top-[43px] lg:bottom-[43px] lg:left-[26.5px] xl:top-[47px] xl:bottom-[47px] xl:left-[28.5px]"
                       />
 
                       {FAQS.map((item, idx) => {

@@ -56,9 +56,7 @@ export const ReadyToMoveCta = memo(function ReadyToMoveCta() {
   const [subscribed, setSubscribed] = useState(false)
   const hasAutoEngaged = useRef(false)
 
-  const setCartOpen = useUIStore((s) => s.setCartOpen)
-
-  useEffect(() => {
+useEffect(() => {
     const el = sectionRef.current
     if (!el) return
     let timerId: number | null = null
@@ -153,13 +151,7 @@ export const ReadyToMoveCta = memo(function ReadyToMoveCta() {
               <Check className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" aria-hidden="true" />
               <span>{t.launch.readyCta.successTitle}</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setCartOpen(true)}
-              className="cursor-pointer rounded-full bg-white px-5 py-2 font-heading text-xs font-bold text-[#0f172a] uppercase transition hover:bg-[#00e5ff]"
-            >
-              {t.launch.readyCta.viewPackage}
-            </button>
+
           </div>
         ) : (
           <>

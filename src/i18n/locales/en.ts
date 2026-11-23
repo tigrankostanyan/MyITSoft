@@ -482,4 +482,15 @@ export const en: SiteTranslations = {
       ingredients: ['3-Language Support (HY/RU/EN)', 'Intuitive CMS Console', 'Automated Lead Routing', 'Google Analytics & SEO'],
     },
   },
+  notFound: {
+    badge: 'MYITSOFT · ERROR 404',
+    codeLabel: '404',
+    titlePrefix: 'PAGE NOT',
+    titleHighlight: 'FOUND',
+    description:
+      'The link you followed may be outdated or the page has been moved. Return to the main platform or get in touch with our team.',
+    backHome: 'BACK TO HOME',
+    contactUs: 'CONTACT US',
+    quickLinksTitle: 'QUICK NAVIGATION',
+  },
 }

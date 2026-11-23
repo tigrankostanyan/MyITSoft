@@ -482,4 +482,15 @@ export const hy: SiteTranslations = {
       ingredients: ['3 լեզվի աջակցություն', 'Հեշտ CMS կառավարում', 'Հայտերի ավտոմատ ուղարկում', 'Google Analytics & SEO'],
     },
   },
+  notFound: {
+    badge: 'MYITSOFT · ՍԽԱԼ 404',
+    codeLabel: '404',
+    titlePrefix: 'ԷՋԸ ՉԻ',
+    titleHighlight: 'ԳՏՆՎԵԼ',
+    description:
+      'Հղումը, որով անցել եք, հնարավոր է փոփոխվել է կամ այլևս գոյություն չունի։ Վերադարձեք գլխավոր էջ կամ կապ հաստատեք մեր թիմի հետ։',
+    backHome: 'ԳԼԽԱՎՈՐ ԷՋ',
+    contactUs: 'ԿԱՊ ՄԵԶ ՀԵՏ',
+    quickLinksTitle: 'ԱՐԱԳ ԱՆՑՈՒՄՆԵՐ',
+  },
 }

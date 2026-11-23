@@ -482,4 +482,15 @@ export const ru: SiteTranslations = {
       ingredients: ['Поддержка 3 языков', 'Удобное управление CMS', 'Автоматическая маршрутизация заявок', 'Google Analytics и SEO'],
     },
   },
+  notFound: {
+    badge: 'MYITSOFT · ОШИБКА 404',
+    codeLabel: '404',
+    titlePrefix: 'СТРАНИЦА НЕ',
+    titleHighlight: 'НАЙДЕНА',
+    description:
+      'Ссылка, по которой вы перешли, могла устареть или страница была перемещена. Вернитесь на главную или свяжитесь с нашей командой.',
+    backHome: 'НА ГЛАВНУЮ',
+    contactUs: 'СВЯЗАТЬСЯ С НАМИ',
+    quickLinksTitle: 'БЫСТРЫЕ ПЕРЕХОДЫ',
+  },
 }

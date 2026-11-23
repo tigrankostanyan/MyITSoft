@@ -80,7 +80,7 @@ export function usePreloaderLock(
     }
 
     shellEl?.addEventListener('animationend', onAnimationEnd)
-    const fallbackTimer = window.setTimeout(complete, 500)
+    const fallbackTimer = window.setTimeout(complete, 5200)
 
     window.addEventListener('wheel', blockScrollEvent, { passive: false, capture: true })
     window.addEventListener('touchmove', blockScrollEvent, { passive: false, capture: true })
