@@ -3,7 +3,10 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { MidGimbal, OuterGimbal } from './HubRings'
 import { HubCpu } from './HubCpu'
-import { N8nEmblem, PremiumEmblem, ShieldEmblem, SpeedEmblem } from './HubEmblems'
+import { N8nEmblem } from './emblems/N8nEmblem'
+import { PremiumEmblem } from './emblems/PremiumEmblem'
+import { ShieldEmblem } from './emblems/ShieldEmblem'
+import { SpeedEmblem } from './emblems/SpeedEmblem'
 import type { ModelProps } from './modelTypes'
 
 /** Silver gyroscope with CPU core and orbiting emblems */
