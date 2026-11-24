@@ -12,8 +12,8 @@ interface HeroSectionProps {
   heroLogoRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
   heroDarkenRef: React.RefObject<HTMLDivElement | null>
   heroContentRef: React.RefObject<HTMLDivElement | null>
-  heroPosterRef: React.RefObject<HTMLDivElement | null>
   onJumpTo: (id: string) => void
+  onHeroReady?: () => void
   onOpenInspector?: (id: string) => void
 }
 
@@ -23,8 +23,8 @@ export const HeroSection = memo(function HeroSection({
   heroLogoRefs,
   heroDarkenRef,
   heroContentRef,
-  heroPosterRef,
   onJumpTo,
+  onHeroReady,
 }: HeroSectionProps) {
   const { t } = useTranslations()
 
@@ -39,10 +39,7 @@ export const HeroSection = memo(function HeroSection({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-0 bg-[#050812] opacity-0 will-change-[opacity]"
         />
-        <Hero3DStage
-          scrollProgressRef={scrollProgressRef}
-          posterWrapRef={heroPosterRef}
-        />
+        <Hero3DStage scrollProgressRef={scrollProgressRef} onReady={onHeroReady} />
       </div>
 
       <section className="bg-royal-hero relative -mt-[100vh] flex min-h-screen flex-col justify-between overflow-x-clip pt-20 pb-28 min-[576px]:pt-24 min-[576px]:pb-10 md:pt-28">

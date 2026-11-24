@@ -1,6 +1,5 @@
 import { lazy, startTransition, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { getCachedScrollY } from '~/lib/scroll-math'
 import { useUIStore } from '~/store/ui-store'
 import { useHomeScrollChoreography } from '~/lib/useHomeScrollChoreography'
 import { Preloader } from '~/components/shop/Preloader'
@@ -19,18 +18,14 @@ export const Route = createFileRoute('/')({
       {
         rel: 'preload',
         as: 'image',
-        href: '/images/hero-stage-mobile.webp',
-        media: '(max-width: 767px)',
+        href: '/myitsoft-logo.webp',
         fetchPriority: 'high',
       },
       {
         rel: 'preload',
-        as: 'image',
-        imageSrcSet:
-          '/images/hero-stage-desktop-480.webp 480w, /images/hero-stage-desktop-800.webp 800w, /images/hero-stage-desktop.webp 973w',
-        imageSizes: 'min(57.9vw, 90.1vh)',
-        media: '(min-width: 768px)',
-        fetchPriority: 'high',
+        as: 'fetch',
+        href: '/models/macbook.glb',
+        crossOrigin: 'anonymous',
       },
     ],
   }),
@@ -43,7 +38,6 @@ function Home() {
   const heroLogoRefs = useRef<(HTMLDivElement | null)[]>([])
   const heroDarkenRef = useRef<HTMLDivElement>(null)
   const heroContentRef = useRef<HTMLDivElement>(null)
-  const heroPosterRef = useRef<HTMLDivElement>(null)
 
   const cartTrackRef = useRef<HTMLDivElement>(null)
   const cartProgressRef = useRef(0)
@@ -52,45 +46,22 @@ function Home() {
 
   const [belowFoldMounted, setBelowFoldMounted] = useState(false)
 
-  useEffect(() => {
-    if (getCachedScrollY() > 4 || Boolean(window.location.hash)) {
-      startTransition(() => setBelowFoldMounted(true))
-      return
-    }
-
-    let triggered = false
-    const mountBelowFold = () => {
-      if (triggered) return
-      triggered = true
-      cleanup()
-      startTransition(() => setBelowFoldMounted(true))
-    }
-
-    const onScroll = () => {
-      if (getCachedScrollY() > 4) mountBelowFold()
-    }
-
-    const events: (keyof WindowEventMap)[] = [
-      'pointerdown',
-      'wheel',
-      'touchstart',
-      'keydown',
-    ]
-
-    const cleanup = () => {
-      for (const evt of events) {
-        window.removeEventListener(evt, mountBelowFold)
-      }
-      window.removeEventListener('scroll', onScroll)
-    }
-
-    for (const evt of events) {
-      window.addEventListener(evt, mountBelowFold, { passive: true, once: true })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-
-    return cleanup
+  const handleHeroReady = useCallback(() => {
+    startTransition(() => setBelowFoldMounted(true))
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        useUIStore.getState().setHeroReady(true)
+      })
+    })
   }, [])
+
+  useEffect(() => {
+    if (belowFoldMounted) return
+    const timer = window.setTimeout(() => {
+      startTransition(() => setBelowFoldMounted(true))
+    }, 1400)
+    return () => window.clearTimeout(timer)
+  }, [belowFoldMounted])
 
   const cartOpen = useUIStore((s) => s.cartOpen)
   const overlayOpen = useUIStore(
@@ -103,7 +74,6 @@ function Home() {
     heroLogoRefs,
     heroDarkenRef,
     heroContentRef,
-    heroPosterRef,
     cartTrackRef,
     cartProgressRef,
     cartSpotlightRef,
@@ -159,8 +129,8 @@ function Home() {
           heroLogoRefs={heroLogoRefs}
           heroDarkenRef={heroDarkenRef}
           heroContentRef={heroContentRef}
-          heroPosterRef={heroPosterRef}
           onJumpTo={jumpTo}
+          onHeroReady={handleHeroReady}
         />
 
         {belowFoldMounted ? (

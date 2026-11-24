@@ -14,10 +14,7 @@ export const HeroWhySection = memo(function HeroWhySection() {
   const { t } = useTranslations()
 
   return (
-    <section
-      className="bg-site-ambient relative flex flex-col justify-between overflow-x-clip pt-12 pb-16 sm:py-20 md:min-h-screen lg:min-h-[135vh] lg:py-28"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 900px' }}
-    >
+    <section className="bg-site-ambient relative flex flex-col justify-between overflow-x-clip pt-12 pb-16 sm:py-20 md:min-h-screen lg:min-h-[135vh] lg:py-28">
       <div className="site-container flex flex-1 flex-col justify-center">
         <div className="pointer-events-none relative z-30 text-center">
           <h2 className="font-display text-[clamp(1.85rem,8vw,6.4rem)] leading-[0.96] text-white/95 uppercase">

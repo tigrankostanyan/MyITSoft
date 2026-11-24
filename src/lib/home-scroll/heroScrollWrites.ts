@@ -1,20 +1,18 @@
 import { HERO_FLOATING_LOGO_SPEEDS } from '~/components/home/HeroFloatingTechLogos'
-import { getStableViewportWidth, smoothstep } from '../scroll-math'
+import { smoothstep } from '../scroll-math'
 
 export interface HeroScrollTargets {
   heroDarkenRef: React.RefObject<HTMLDivElement | null>
   heroContentRef: React.RefObject<HTMLDivElement | null>
-  heroPosterRef: React.RefObject<HTMLDivElement | null>
   heroLogoRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
 }
 
-/** Writes the scroll-driven hero transforms (darken, content exit, poster rise, logo lift). */
+/** Writes the scroll-driven hero transforms (darken, content exit, logo lift). */
 export function applyHeroScrollWrites(
   targets: HeroScrollTargets,
   scroll: number,
   heroTop: number,
   vh: number,
-  heroProgress: number,
 ) {
   const heroScroll = Math.max(0, scroll - heroTop)
   const darken = smoothstep(0, vh * 0.65, heroScroll) * 0.88
@@ -26,22 +24,6 @@ export function applyHeroScrollWrites(
   if (targets.heroContentRef.current) {
     targets.heroContentRef.current.style.opacity = (1 - contentExit).toFixed(3)
     targets.heroContentRef.current.style.transform = `translate3d(0, ${(-contentExit * 36).toFixed(2)}px, 0)`
-  }
-
-  if (targets.heroPosterRef.current) {
-    const isMobile = getStableViewportWidth() < 768
-    const centerU = smoothstep(0, 0.26, heroProgress)
-    const enterU = smoothstep(0.16, 0.52, heroProgress)
-    const fadeU = smoothstep(0.4, 0.54, heroProgress)
-
-    const tx = isMobile ? 4.7 * centerU : -19.85 * centerU
-    const ty = isMobile
-      ? 23.3 * centerU - Math.sin(centerU * Math.PI) * 3.0
-      : 3.0 * centerU - Math.sin(centerU * Math.PI) * 4.5
-    const scale = 1 + enterU * (isMobile ? 2.8 : 3.2)
-
-    targets.heroPosterRef.current.style.transform = `scale(${scale.toFixed(3)}) translate3d(${tx.toFixed(2)}%, ${ty.toFixed(2)}%, 0)`
-    targets.heroPosterRef.current.style.opacity = (1 - fadeU).toFixed(3)
   }
 
   const fade = 1 - smoothstep(vh * 0.06, vh * 0.48, heroScroll)

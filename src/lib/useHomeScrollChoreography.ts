@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type Lenis from 'lenis'
+import Lenis from 'lenis'
 import { useUIStore } from '~/store/ui-store'
 import { applyCartGlowWrites } from './home-scroll/cartGlowWrites'
 import { applyHeroScrollWrites } from './home-scroll/heroScrollWrites'
@@ -18,7 +18,6 @@ interface ScrollChoreographyArgs {
   heroLogoRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
   heroDarkenRef: React.RefObject<HTMLDivElement | null>
   heroContentRef: React.RefObject<HTMLDivElement | null>
-  heroPosterRef: React.RefObject<HTMLDivElement | null>
   cartTrackRef: React.RefObject<HTMLDivElement | null>
   cartProgressRef: React.MutableRefObject<number>
   cartSpotlightRef: React.RefObject<HTMLDivElement | null>
@@ -32,7 +31,6 @@ export function useHomeScrollChoreography({
   heroLogoRefs,
   heroDarkenRef,
   heroContentRef,
-  heroPosterRef,
   cartTrackRef,
   cartProgressRef,
   cartSpotlightRef,
@@ -41,14 +39,10 @@ export function useHomeScrollChoreography({
 }: ScrollChoreographyArgs) {
   const lenisRef = useRef<Lenis | null>(null)
   const overlayOpenRef = useRef(overlayOpen)
-  const wasPreloaderOpenRef = useRef(useUIStore.getState().preloaderOpen)
   overlayOpenRef.current = overlayOpen
 
   useEffect(() => {
     let disposed = false
-    let lenis: Lenis | null = null
-    let unsubLayout: (() => void) | null = null
-    let writeRafId = 0
     let heroTop = 0
     let heroRange = 1
     let cartTop = 0
@@ -56,13 +50,12 @@ export function useHomeScrollChoreography({
     let heroActive = true
     let cartActive = true
 
-    const applyHeroLogos = (scroll: number, vh: number, heroProgress: number) => {
+    const applyHeroLogos = (scroll: number, vh: number) => {
       applyHeroScrollWrites(
-        { heroDarkenRef, heroContentRef, heroPosterRef, heroLogoRefs },
+        { heroDarkenRef, heroContentRef, heroLogoRefs },
         scroll,
         heroTop,
         vh,
-        heroProgress,
       )
     }
 
@@ -82,11 +75,11 @@ export function useHomeScrollChoreography({
         heroActive = true
         const p = clamp01((scroll - heroTop) / heroRange)
         scrollProgressRef.current = p
-        applyHeroLogos(scroll, vh, p)
+        applyHeroLogos(scroll, vh)
       } else if (heroActive) {
         heroActive = false
         scrollProgressRef.current = 1
-        applyHeroLogos(heroLimit, vh, 1)
+        applyHeroLogos(heroLimit, vh)
       }
 
       const cartMin = cartTop - vh
@@ -100,9 +93,20 @@ export function useHomeScrollChoreography({
       }
     }
 
-    let tracksMeasured = false
+    const lenis = new Lenis({
+      autoRaf: true,
+      lerp: 0.095,
+      smoothWheel: true,
+      wheelMultiplier: 0.95,
+    })
+    lenisRef.current = lenis
+
+    if (overlayOpenRef.current) {
+      lenis.stop()
+    }
+
     const measureTracks = () => {
-      tracksMeasured = true
+      if (disposed) return
       const vh = getStableViewportHeight()
       if (heroTrackRef.current) {
         const hb = measureElementBounds(heroTrackRef.current)
@@ -117,92 +121,51 @@ export function useHomeScrollChoreography({
       heroActive = true
       cartActive = true
       syncCachedScrollY()
-      if (!writeRafId) {
-        writeRafId = requestAnimationFrame(() => {
-          writeRafId = 0
-          if (!disposed) {
-            updateCartAndHero(getCachedScrollY())
-          }
-        })
-      }
+      updateCartAndHero(getCachedScrollY())
     }
 
-    const ensureMeasured = () => {
-      if (!tracksMeasured) measureTracks()
-    }
+    measureTracks()
 
-    if (getCachedScrollY() > 4) {
-      measureTracks()
-    }
-
-    unsubLayout = subscribeLayoutChange(() => {
-      lenis?.resize()
-      if (tracksMeasured || getCachedScrollY() > 4) {
+    let trackResizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      trackResizeObserver = new ResizeObserver(() => {
+        if (disposed) return
+        lenis.resize()
         measureTracks()
+      })
+      if (heroTrackRef.current) trackResizeObserver.observe(heroTrackRef.current)
+      if (cartTrackRef.current) trackResizeObserver.observe(cartTrackRef.current)
+    }
+
+    const unsubLayout = subscribeLayoutChange(() => {
+      lenis.resize()
+      measureTracks()
+      if (cartTrackRef.current && trackResizeObserver) {
+        trackResizeObserver.observe(cartTrackRef.current)
       }
     })
 
+    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
+      syncCachedScrollY(scroll)
+      updateCartAndHero(scroll)
+    })
+
     const onNativeScroll = () => {
-      ensureMeasured()
-      if (!lenis) {
-        syncCachedScrollY()
-        updateCartAndHero(getCachedScrollY())
+      if (lenis.isStopped) return
+      const y = window.scrollY || 0
+      if (Math.abs(y - getCachedScrollY()) > 0.5) {
+        syncCachedScrollY(y)
+        updateCartAndHero(y)
       }
     }
     window.addEventListener('scroll', onNativeScroll, { passive: true })
 
-    let lenisLoading = false
-    const initLenis = () => {
-      if (disposed || lenis || lenisLoading) return
-      lenisLoading = true
-      import('lenis')
-        .then(({ default: LenisCtor }) => {
-          if (disposed) return
-          lenis = new LenisCtor({
-            autoRaf: true,
-            lerp: 0.095,
-            smoothWheel: true,
-            wheelMultiplier: 0.95,
-          })
-          lenisRef.current = lenis
-
-          if (overlayOpenRef.current) {
-            lenis.stop()
-          }
-
-          measureTracks()
-          lenis.on('scroll', ({ scroll }: { scroll: number }) => {
-            syncCachedScrollY(scroll)
-            updateCartAndHero(scroll)
-          })
-        })
-        .catch(() => { })
-    }
-
-    const isFinePointer = window.matchMedia?.('(pointer: fine)').matches
-    const triggerEvents: (keyof WindowEventMap)[] = ['wheel', 'pointerdown', 'keydown']
-    const cleanupLenisTriggers = () => {
-      for (const evt of triggerEvents) {
-        window.removeEventListener(evt, initLenis)
-      }
-    }
-    if (isFinePointer) {
-      if (getCachedScrollY() > 4) {
-        initLenis()
-      } else {
-        for (const evt of triggerEvents) {
-          window.addEventListener(evt, initLenis, { passive: true, once: true })
-        }
-      }
-    }
-
     return () => {
       disposed = true
-      if (writeRafId) cancelAnimationFrame(writeRafId)
-      cleanupLenisTriggers()
       window.removeEventListener('scroll', onNativeScroll)
-      unsubLayout?.()
-      lenis?.destroy()
+      trackResizeObserver?.disconnect()
+      unsubLayout()
+      lenis.destroy()
       lenisRef.current = null
     }
   }, [
@@ -211,7 +174,6 @@ export function useHomeScrollChoreography({
     heroLogoRefs,
     heroDarkenRef,
     heroContentRef,
-    heroPosterRef,
     cartTrackRef,
     cartProgressRef,
     cartSpotlightRef,
@@ -223,19 +185,13 @@ export function useHomeScrollChoreography({
     const preloaderOpen = useUIStore.getState().preloaderOpen
     if (overlayOpen) {
       if (preloaderOpen) {
-        wasPreloaderOpenRef.current = true
-        if (getCachedScrollY() !== 0) window.scrollTo(0, 0)
+        if (window.scrollY !== 0) window.scrollTo(0, 0)
+        syncCachedScrollY(0)
         lenis?.scrollTo(0, { immediate: true, force: true })
         scrollProgressRef.current = 0
       }
       lenis?.stop()
     } else {
-      if (wasPreloaderOpenRef.current) {
-        wasPreloaderOpenRef.current = false
-        if (getCachedScrollY() !== 0) window.scrollTo(0, 0)
-        syncCachedScrollY(0)
-        lenis?.scrollTo(0, { immediate: true, force: true })
-      }
       lenis?.resize()
       lenis?.start()
     }

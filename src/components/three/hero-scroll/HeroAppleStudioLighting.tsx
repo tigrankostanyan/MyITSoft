@@ -9,7 +9,7 @@ export function HeroAppleStudioLighting({ isMobile: _isMobile = false }: { isMob
       <directionalLight position={[-5.5, 4.5, 2.5]} intensity={1.6} color="#e2ecff" />
       <directionalLight position={[0, 2.5, -6]} intensity={1.2} color="#93c5fd" />
 
-      <Environment resolution={32} frames={1}>
+      <Environment resolution={64} frames={1}>
         <group rotation={[-Math.PI / 5, 0, 0]}>
           <Lightformer
             form="rect"

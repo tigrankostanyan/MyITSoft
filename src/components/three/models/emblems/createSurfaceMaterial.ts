@@ -4,15 +4,16 @@ export function createSurfaceMaterial(
   params: THREE.MeshPhysicalMaterialParameters,
   _isMobile: boolean,
 ): THREE.Material {
-  return new THREE.MeshStandardMaterial({
+  const stdParams: THREE.MeshStandardMaterialParameters = {
     color: params.color,
-    emissive: params.emissive,
-    emissiveIntensity: params.emissiveIntensity,
     metalness: params.metalness,
     roughness: params.roughness,
-    envMapIntensity: params.envMapIntensity,
-    wireframe: params.wireframe,
-  })
+  }
+  if (params.emissive !== undefined) stdParams.emissive = params.emissive
+  if (params.emissiveIntensity !== undefined) stdParams.emissiveIntensity = params.emissiveIntensity
+  if (params.envMapIntensity !== undefined) stdParams.envMapIntensity = params.envMapIntensity
+  if (params.wireframe !== undefined) stdParams.wireframe = params.wireframe
+  return new THREE.MeshStandardMaterial(stdParams)
 }
 
 export interface EmblemProps {

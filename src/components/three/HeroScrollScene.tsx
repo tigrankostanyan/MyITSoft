@@ -1,4 +1,4 @@
-import { memo, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useUIStore } from '~/store/ui-store'
@@ -13,7 +13,7 @@ interface HeroScrollSceneProps {
   onReady?: () => void
 }
 
-function ChoreographedStage({
+const ChoreographedStage = memo(function ChoreographedStage({
   scrollProgressRef,
   isMobile,
   onReady,
@@ -32,7 +32,15 @@ function ChoreographedStage({
   const mechanismRef = useRef<THREE.Group>(null)
   const initializedRef = useRef(false)
   const macbookSnappedRef = useRef(false)
+  const smoothedPRef = useRef(0)
+  const smoothMxRef = useRef(0)
+  const smoothMyRef = useRef(0)
   const lastSizeRef = useRef({ w: 0, h: 0 })
+
+  useLayoutEffect(() => {
+    if (macbookRef.current) macbookRef.current.visible = false
+    if (mechanismRef.current) mechanismRef.current.visible = false
+  }, [])
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05)
@@ -44,24 +52,40 @@ function ChoreographedStage({
     if (sizeChanged) {
       lastSizeRef.current = { w: width, h: height }
     }
+
     const hasMacbook = Boolean(macbookRef.current && macbookRef.current.children.length > 0)
     const firstMacbookFrame = hasMacbook && !macbookSnappedRef.current
     if (firstMacbookFrame) {
       macbookSnappedRef.current = true
     }
+
     const snapImmediate = !initializedRef.current || sizeChanged || firstMacbookFrame
     initializedRef.current = true
-    const damp = snapImmediate ? 1 : 1 - Math.exp(-16.0 * dt)
 
-    const p = scrollProgressRef.current
+    const rawP = THREE.MathUtils.clamp(scrollProgressRef.current, 0, 1)
+    let p: number
+    if (snapImmediate) {
+      p = rawP
+    } else {
+      const pDamp = 1 - Math.exp(-26.0 * dt)
+      const nextP = THREE.MathUtils.lerp(smoothedPRef.current, rawP, pDamp)
+      p = Math.abs(rawP - nextP) < 0.0001 ? rawP : nextP
+    }
+    smoothedPRef.current = p
+
     const t = state.clock.elapsedTime
     const vw = state.viewport.width
     const isSmallMobile = width < 420
     const isTablet = width >= 768 && width < 1024
     const pointerFactor = mobileViewport ? 0 : 1
 
-    const mx = state.pointer.x * 0.2 * pointerFactor
-    const my = state.pointer.y * 0.14 * pointerFactor
+    const targetMx = state.pointer.x * 0.2 * pointerFactor
+    const targetMy = state.pointer.y * 0.14 * pointerFactor
+    const pointerDamp = snapImmediate ? 1 : 1 - Math.exp(-12.0 * dt)
+    smoothMxRef.current = THREE.MathUtils.lerp(smoothMxRef.current, targetMx, pointerDamp)
+    smoothMyRef.current = THREE.MathUtils.lerp(smoothMyRef.current, targetMy, pointerDamp)
+    const mx = smoothMxRef.current
+    const my = smoothMyRef.current
 
     const centerU = THREE.MathUtils.smoothstep(THREE.MathUtils.clamp(p / 0.26, 0, 1), 0, 1)
     const enterU = THREE.MathUtils.smoothstep(THREE.MathUtils.clamp((p - 0.16) / 0.36, 0, 1), 0, 1)
@@ -76,11 +100,10 @@ function ChoreographedStage({
     const maxStartX = Math.max(0, vw * 0.5 - startScale * 1.35)
     const startX = mobileViewport
       ? 0
-      : Math.min(isTablet ? Math.min(1.2, vw * 0.25) : 1.49, maxStartX)
+      : Math.min(isTablet ? Math.min(1.2, vw * 0.25) : 1.54, maxStartX)
 
     const macTargetX = THREE.MathUtils.lerp(startX, 0, centerU)
-    const macTargetY =
-      THREE.MathUtils.lerp(startY, 0, centerU) + Math.sin(centerU * Math.PI) * 0.36
+    const macTargetY = THREE.MathUtils.lerp(startY, 0, centerU)
     const macTargetZ = THREE.MathUtils.lerp(0.1, -1.25, enterU)
     const macTargetScale = THREE.MathUtils.lerp(startScale, mobileViewport ? 4.2 : 5.4, enterU)
 
@@ -90,17 +113,10 @@ function ChoreographedStage({
     const macRotX = THREE.MathUtils.lerp(startRotX, 0, centerU)
 
     if (macbookRef.current) {
-      macbookRef.current.position.x = THREE.MathUtils.lerp(macbookRef.current.position.x, macTargetX, damp)
-      macbookRef.current.position.y = THREE.MathUtils.lerp(macbookRef.current.position.y, macTargetY, damp)
-      macbookRef.current.position.z = THREE.MathUtils.lerp(macbookRef.current.position.z, macTargetZ, damp)
-      macbookRef.current.scale.setScalar(
-        THREE.MathUtils.lerp(macbookRef.current.scale.x, macTargetScale, damp),
-      )
-      macbookRef.current.rotation.y = THREE.MathUtils.lerp(macbookRef.current.rotation.y, macRotY, damp)
-      macbookRef.current.rotation.x = THREE.MathUtils.lerp(macbookRef.current.rotation.x, macRotX, damp)
-      macbookRef.current.rotation.z = THREE.MathUtils.lerp(macbookRef.current.rotation.z, 0, damp)
-
-      macbookRef.current.visible = screenFadeU < 0.98
+      macbookRef.current.position.set(macTargetX, macTargetY, macTargetZ)
+      macbookRef.current.scale.setScalar(macTargetScale)
+      macbookRef.current.rotation.set(macRotX, macRotY, 0)
+      macbookRef.current.visible = hasMacbook && screenFadeU < 0.98
     }
 
     if (screenMatRef.current) {
@@ -138,22 +154,18 @@ function ChoreographedStage({
         macTargetZ + mScale * 1.38,
       )
 
-      mechanismRef.current.position.x = THREE.MathUtils.lerp(mechanismRef.current.position.x, mX, damp)
-      mechanismRef.current.position.y = THREE.MathUtils.lerp(mechanismRef.current.position.y, mY, damp)
-      mechanismRef.current.position.z = THREE.MathUtils.lerp(mechanismRef.current.position.z, mZ, damp)
-      mechanismRef.current.scale.setScalar(
-        THREE.MathUtils.lerp(mechanismRef.current.scale.x, mScale, damp),
+      mechanismRef.current.position.set(mX, mY, mZ)
+      mechanismRef.current.scale.setScalar(mScale)
+      mechanismRef.current.rotation.set(
+        THREE.MathUtils.lerp(macRotX, 0.18, emergeU) + my * 0.16 * emergeU,
+        THREE.MathUtils.lerp(macRotY, 0, emergeU) + t * 0.25 + mx * 0.28 * emergeU,
+        0,
       )
-
-      mechanismRef.current.rotation.y =
-        THREE.MathUtils.lerp(macRotY, 0, emergeU) + t * 0.25 + mx * 0.28 * emergeU
-      mechanismRef.current.rotation.x =
-        THREE.MathUtils.lerp(macRotX, 0.18, emergeU) + my * 0.16 * emergeU
     }
 
     if (!readyNotifiedRef.current && hasMacbook) {
       readyFramesRef.current += 1
-      if (readyFramesRef.current >= 2) {
+      if (readyFramesRef.current >= 3) {
         readyNotifiedRef.current = true
         const cb = onReadyRef.current
         if (cb) requestAnimationFrame(cb)
@@ -165,12 +177,7 @@ function ChoreographedStage({
     <>
       <HeroAppleStudioLighting isMobile={isMobile} />
 
-      <group
-        ref={macbookRef}
-        position={[1.49, 0.26, 0.1]}
-        rotation={[0.12, -0.38, 0]}
-        scale={1.08}
-      >
+      <group ref={macbookRef}>
         <Suspense fallback={null}>
           <RealMacBookProModel
             screenMatRef={screenMatRef}
@@ -180,28 +187,25 @@ function ChoreographedStage({
         </Suspense>
       </group>
 
-      <group ref={mechanismRef} position={[1.39, 0.26, 0.73]} scale={0.3} visible={false}>
+      <group ref={mechanismRef}>
         <AutomationHubModel color="#38bdf8" isMobile={isMobile} />
       </group>
     </>
   )
-}
+})
 
 export const HeroScrollScene = memo(function HeroScrollScene({
   scrollProgressRef,
   onReady,
 }: HeroScrollSceneProps) {
   const [mounted, setMounted] = useState(false)
-  const [sceneReady, setSceneReady] = useState(false)
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && getStableViewportWidth() < 768,
   )
   const { ref, inView } = useInView('150px', true)
   const modalOpen = useUIStore((s) => s.inspectorId !== null)
-  const preloaderOpen = useUIStore((s) => s.preloaderOpen)
 
   const handleSceneReady = useCallback(() => {
-    setSceneReady(true)
     onReady?.()
   }, [onReady])
 
@@ -213,14 +217,14 @@ export const HeroScrollScene = memo(function HeroScrollScene({
     return () => window.removeEventListener('resize', updateMobile)
   }, [])
 
-  const active = mounted && (!sceneReady || (!preloaderOpen && inView && !modalOpen))
+  const active = mounted && inView && !modalOpen
 
   return (
     <div ref={ref} className="h-full w-full">
       {mounted && (
         <Canvas
           frameloop={active ? 'always' : 'demand'}
-          dpr={isMobile ? [1, 1.15] : [1, 1.5]}
+          dpr={isMobile ? [1, 1.25] : [1, 2]}
           camera={{ position: [0, 0.12, 6.2], fov: 36, near: 0.05, far: 100 }}
           gl={{
             antialias: true,

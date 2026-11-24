@@ -24,6 +24,7 @@ interface UIState {
   translations: SiteTranslations
   preloaderOpen: boolean
   preloaderSeen: boolean
+  heroReady: boolean
   leftDrawerOpen: boolean
   cartOpen: boolean
   authModalOpen: boolean
@@ -36,6 +37,7 @@ interface UIState {
   hydrateLocale: () => void
   setPreloaderOpen: (open: boolean) => void
   dismissPreloader: () => void
+  setHeroReady: (ready: boolean) => void
   setLeftDrawer: (open: boolean) => void
   setCartOpen: (open: boolean) => void
   setAuthModalOpen: (open: boolean) => void
@@ -63,6 +65,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   translations: DEFAULT_TRANSLATIONS,
   preloaderOpen: true,
   preloaderSeen: false,
+  heroReady: false,
   leftDrawerOpen: false,
   cartOpen: false,
   authModalOpen: false,
@@ -100,6 +103,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
   setPreloaderOpen: (preloaderOpen) => set({ preloaderOpen }),
   dismissPreloader: () => set({ preloaderSeen: true, preloaderOpen: false }),
+  setHeroReady: (heroReady) => set({ heroReady }),
   setLeftDrawer: (leftDrawerOpen) => set({ leftDrawerOpen }),
   setCartOpen: (cartOpen) => set({ cartOpen }),
   setAuthModalOpen: (authModalOpen) => set({ authModalOpen }),

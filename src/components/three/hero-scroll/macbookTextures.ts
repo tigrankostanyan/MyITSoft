@@ -2,24 +2,26 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { drawMacBookScreen } from './drawMacBookScreen'
 
-/** Screen texture mapped onto the MacBook GLB display. */
+/** High-DPI screen texture mapped onto the MacBook GLB display. */
 export function useMacBookCleanScreenTexture(isMobile = false) {
   const texture = useMemo(() => {
     if (typeof document === 'undefined') return null
-    const width = isMobile ? 512 : 1024
-    const height = isMobile ? 320 : 640
+    const width = isMobile ? 1024 : 1600
+    const height = isMobile ? 640 : 1000
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
-    ctx.scale(width / 1600, height / 1000)
+    if (width !== 1600 || height !== 1000) {
+      ctx.scale(width / 1600, height / 1000)
+    }
     drawMacBookScreen(ctx)
 
     const tex = new THREE.CanvasTexture(canvas)
     tex.colorSpace = THREE.SRGBColorSpace
     tex.flipY = true
-    tex.anisotropy = isMobile ? 1 : 4
+    tex.anisotropy = isMobile ? 4 : 8
     tex.needsUpdate = true
     return tex
   }, [isMobile])
